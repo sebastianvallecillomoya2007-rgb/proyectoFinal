@@ -1,0 +1,53 @@
+{
+  "games": [
+    {
+      "id": "1",
+      "title": "Elden Ring",
+      "category": "action",
+      "price": 12.39,
+      "oldPrice": 59.99,
+      "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/capsule_616x353.jpg",
+      "isHero": true,
+      "isOffer": false,
+      "isNew": false,
+      "isUpcoming": false
+    },
+    {
+      "id": "2",
+      "title": "Devil May Cry 5",
+      "category": "action",
+      "price": 5.80,
+      "oldPrice": 14.50,
+      "image": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/601150/capsule_616x353.jpg",
+      "isHero": false,
+      "isOffer": true,
+      "discount": "-60%",
+      "isNew": false,
+      "isUpcoming": false
+    },
+    {
+      "id": "3",
+      "title": "Starfield",
+      "category": "scifi",
+      "price": 69.99,
+      "image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+      "isHero": false,
+      "isOffer": false,
+      "isNew": true,
+      "releaseText": "Lanzado esta semana",
+      "isUpcoming": false
+    },
+    {
+      "id": "4",
+      "title": "Grand Theft Auto VI",
+      "category": "action",
+      "price": 69.99,
+      "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
+      "isHero": false,
+      "isOffer": false,
+      "isNew": false,
+      "isUpcoming": true,
+      "launchDate": "Q4 2026"
+    }
+  ]
+}
