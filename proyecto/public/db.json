@@ -48,6 +48,66 @@
       "isNew": false,
       "isUpcoming": true,
       "launchDate": "Q4 2026"
+    },
+    {
+      "id": "5",
+      "title": "God of War Ragnarök",
+      "category": "action",
+      "price": 23.10,
+      "image": "https://image.api.playstation.com/vulcan/ap/rnd/202503/2016/9c66234099a4c6dc39a12c4101746f7dc9d87babbca5efe4.jpg",
+      "isNew": true,
+      "isOffer": false,
+      "isUpcoming": false
+    },
+    {
+      "id": "6",
+      "title": "Cyberpunk 2077",
+      "category": "scifi",
+      "price": 20.40,
+      "image": "https://gaming-cdn.com/images/products/17688/616x353/cyberpunk-2077-playstation-5-playstation-4-juego-playstation-store-cover.jpg?v=1748447708",
+      "isNew": true,
+      "isOffer": false,
+      "isUpcoming": false
+    },
+    {
+      "id": "7",
+      "title": "Resident Evil Requiem",
+      "category": "horror",
+      "price": 13.20,
+      "image": "https://image.api.playstation.com/vulcan/ap/rnd/202512/1205/74bb57eb10447ae35775f625271f202360bae45cb3572da5.jpg",
+      "isNew": true,
+      "isOffer": false,
+      "isUpcoming": false
+    },
+    {
+      "id": "8",
+      "title": "Celeste",
+      "category": "indie",
+      "price": 4.52,
+      "image": "https://assets.nintendo.com/image/upload/c_fill,w_1200/q_auto:best/f_auto/dpr_2.0/store/software/switch/70010000006442/691ba3e0801180a9864cc8a7694b6f98097f9d9799bc7e3dc6db92f086759252",
+      "isTopRated": true,
+      "isOffer": false,
+      "isUpcoming": false
+    },
+    {
+      "id": "9",
+      "title": "Sekiro: Shadows Die Twice",
+      "category": "action",
+      "price": 17.18,
+      "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/814380/capsule_616x353.jpg?t=1762888662",
+      "isTopRated": true,
+      "isOffer": false,
+      "isUpcoming": false
+    },
+    {
+      "id": "10",
+      "title": "Zenless Zone Zero",
+      "category": "rpg",
+      "price": 0,
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvB8tfKTT1ww3ZPV2dYfoEUXj6enSmZb6xYb6SxXV12Po8bT7wogowJY0D&s=10",
+      "isTopRated": true,
+      "isOffer": false,
+      "isUpcoming": false
     }
   ]
 }

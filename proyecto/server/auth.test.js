@@ -7,6 +7,7 @@ import { join, resolve, dirname, basename } from 'node:path'
 test('registro, sesiones, separación de roles y persistencia', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'nexus-auth-test-'))
   process.env.AUTH_DATA_DIR = directory
+  process.env.RAWG_API_KEY = ''
   process.env.ADMIN_EMAIL = 'admin@test.com'
   process.env.ADMIN_PASSWORD = 'Test-admin-927!'
   const { server } = await import('./index.js')

@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import Navbar from './components/Navbar'
-import HeroSection from './components/HeroSection'
-import Catalog from './components/Catalog'
-import Footer from './components/Footer'
-import Sidebar from './components/Sidebar'
-import FeaturedLists from './components/FeaturedLists'
+import Store from './components/Store'
 import Routing from './routes/Routing'
 import { api } from './auth/api'
 import './css/auth.css'
@@ -35,16 +31,7 @@ function App() {
       <Navbar onSearchChange={setSearchQuery} user={user} onLogout={logout} loading={loading} />
       {authError && <p className="auth-error global-auth-error" role="alert">{authError}</p>}
       <Routing user={user} loading={loading} onAuthenticated={account => { setUser(account); setAuthError('') }}>
-      <div className="container">
-        <Sidebar>
-          <Footer />
-        </Sidebar>
-        <main className="store-home">
-          <HeroSection />
-          <Catalog searchQuery={searchQuery} />
-          <FeaturedLists />
-        </main>
-      </div>
+      <Store user={user} searchQuery={searchQuery} />
       </Routing>
     </>
   )

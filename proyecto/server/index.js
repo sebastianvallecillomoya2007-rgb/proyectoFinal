@@ -1,11 +1,25 @@
+import './env.js'
 import { createServer } from 'node:http'
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto'
 import { mkdirSync, existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
+import { createCommerce } from './commerce.js'
+import { createRawg } from './rawg.js'
 
 const directory = process.env.AUTH_DATA_DIR || fileURLToPath(new URL('./data/', import.meta.url))
 mkdirSync(directory, { recursive: true })
+const commerce = createCommerce(directory)
+const rawg = createRawg({ key: process.env.RAWG_API_KEY, dates: process.env.RAWG_DATES, platforms: process.env.RAWG_PLATFORMS })
+let rawgStatus = { configured: rawg.configured, nextPage: 1, error: '' }
+let retryAfter = 0
+let firstPageLoaded = false
+async function importRawgPage(page) {
+  const result = await rawg.games(page)
+  commerce.importGames(result.games)
+  firstPageLoaded = true
+  rawgStatus = { configured: rawg.configured, nextPage: result.nextPage, count: result.count, error: '' }
+}
 const file = resolve(directory, 'users.json')
 const sessions = new Map()
 const attempts = new Map()
@@ -53,11 +67,30 @@ setInterval(() => {
 
 export const server = createServer(async (req, res) => {
   try {
-    const path = new URL(req.url, 'http://localhost').pathname
+    const url = new URL(req.url, 'http://localhost')
+    const path = url.pathname
     if (req.method === 'POST' && req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return reply(res, 403, { error: 'Origen no permitido.' })
     const token = /(?:^|;\s*)nexus_session=([^;]+)/.exec(req.headers.cookie || '')?.[1]
     const session = sessions.get(token)
     const user = session?.expires > Date.now() ? users.find(item => item.id === session.userId) : null
+    if (path.startsWith('/api/admin/') && user?.role !== 'admin') return reply(res, user ? 403 : 401, { error: 'Se requiere una sesión de administrador.' })
+    if (req.method === 'GET' && path === '/api/games') {
+      const page = url.searchParams.get('rawgPage')
+      if (page) await importRawgPage(Number(page))
+      else if (rawg.configured && !firstPageLoaded && Date.now() > retryAfter) {
+        try { await importRawgPage(1) } catch (error) { rawgStatus.error = error.message; retryAfter = Date.now() + 60000 }
+      }
+      return reply(res, 200, { games: commerce.games(), rawg: rawgStatus })
+    }
+    if (req.method === 'GET' && path === '/api/platforms') return reply(res, 200, { platforms: await rawg.platforms() })
+    if (req.method === 'GET' && path === '/api/admin/sales') return reply(res, 200, commerce.report(url.searchParams.get('period') || 'all'))
+    if (req.method === 'POST' && /^\/api\/admin\/games\/[^/]+\/price$/.test(path)) {
+      return reply(res, 200, { game: commerce.updatePrice(decodeURIComponent(path.split('/')[4]), await body(req)) })
+    }
+    if (req.method === 'POST' && path === '/api/orders') {
+      if (user?.role !== 'client') return reply(res, user ? 403 : 401, { error: 'Inicia sesión como cliente para comprar.' })
+      return reply(res, 200, { order: commerce.purchase(user, await body(req)) })
+    }
     if (req.method === 'GET' && path === '/api/auth/me') return reply(res, 200, { user: user ? publicUser(user) : null })
     if (req.method === 'POST' && path === '/api/auth/logout') {
       sessions.delete(token)
@@ -97,7 +130,7 @@ export const server = createServer(async (req, res) => {
     reply(res, 404, { error: 'Ruta no encontrada.' })
   } catch (error) {
     console.error(error.message)
-    reply(res, 400, { error: 'No se pudo procesar la solicitud. Intenta nuevamente.' })
+    reply(res, error.status || 400, { error: error.status ? error.message : 'No se pudo procesar la solicitud. Intenta nuevamente.' })
   }
 })
 if (process.argv[1] && resolve(process.argv[1]) === resolve(dirname(fileURLToPath(import.meta.url)), 'index.js')) {

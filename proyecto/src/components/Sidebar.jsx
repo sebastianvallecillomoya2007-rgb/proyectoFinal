@@ -1,18 +1,14 @@
 import '../css/principal.css'
+import { categoryLabel } from '../categories'
 
-export default function Sidebar({ children }) {
+export default function Sidebar({ children, categories = [], category = 'all', onCategoryChange }) {
   return (
     <aside>
       <div>
-        <div className="category-title">CATEGORIES</div>
+        <div className="category-title">CATEGORÍAS</div>
         <ul className="category-list">
-          <li><a href="#/" className="category-item active"><i className="fa-solid fa-border-all"></i> principal</a></li>
-          <li><a href="All-games.html" className="category-item"><i className="fa-solid fa-border-all"></i> All Games</a></li>
-          <li><a href="Action.html" className="category-item"><i className="fa-solid fa-bolt"></i> Action</a></li>
-          <li><a href="rpg.html" className="category-item"><i className="fa-solid fa-shield-halved"></i> RPG</a></li>
-          <li><a href="indie.html" className="category-item"><i className="fa-solid fa-wand-magic-sparkles"></i> Indie</a></li>
-          <li><a href="Sci-Fi.html" className="category-item"><i className="fa-solid fa-rocket"></i> Sci-Fi</a></li>
-          <li><a href="Horror.html" className="category-item"><i className="fa-solid fa-skull"></i> Horror</a></li>
+          <li><button className={`category-item ${category === 'all' ? 'active' : ''}`} aria-pressed={category === 'all'} onClick={() => onCategoryChange?.('all')}>Todos los juegos</button></li>
+          {categories.map(item => <li key={item}><button className={`category-item ${category === item ? 'active' : ''}`} aria-pressed={category === item} onClick={() => onCategoryChange?.(item)}>{categoryLabel(item)}</button></li>)}
         </ul>
       </div>
       {children}

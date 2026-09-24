@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../auth/api'
+import SalesPanel from './SalesPanel'
 
 export default function AdminPage({ user }) {
   const [users, setUsers] = useState([])
@@ -22,6 +23,7 @@ export default function AdminPage({ user }) {
       <h1>Panel de administración</h1>
       <p className="auth-description">Bienvenido, {user.name}. Consulta las cuentas registradas en NEXUS GAMES.</p>
       {error && <p className="auth-error" role="alert">{error}</p>}
+      <SalesPanel />
       <div className="admin-stats">
         <section className="auth-card"><h2>Clientes registrados</h2><strong>{loading || error ? '—' : clients.length}</strong></section>
         <section className="auth-card"><h2>Administradores</h2><strong>{loading || error ? '—' : users.filter(account => account.role === 'admin').length}</strong></section>

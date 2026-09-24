@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import GameCard from './GameCard'
 import '../css/principal.css'
+import { matchesCategory } from '../categories'
 
 const homeSections = [
   { flag: 'isUpcoming', variant: 'upcoming', id: 'upcomingGrid', className: 'upcoming-grid', icon: 'fa-regular fa-clock', title: 'PRÓXIMOS LANZAMIENTOS', link: 'Ver Calendario' },
@@ -10,7 +11,7 @@ const homeSections = [
 
 export default function Catalog({
   games,
-  apiUrl = `${import.meta.env.BASE_URL}db.json`,
+  apiUrl = '/api/games',
   searchQuery = '',
   category = 'all',
   view = 'home',
@@ -59,7 +60,7 @@ export default function Catalog({
 
   const query = searchQuery.toLowerCase().trim()
   const filteredGames = (games ?? loadedGames).filter(game => (
-    (category === 'all' || game.category === category) && game.title.toLowerCase().includes(query)
+    matchesCategory(game, category) && game.title.toLowerCase().includes(query)
   ))
 
   function renderCards(list, variant) {
@@ -75,7 +76,7 @@ export default function Catalog({
   }
 
   if (view === 'grid') {
-    return <div className="games-grid" id="gamesGrid" aria-busy={loading}>{renderCards(filteredGames, 'standard')}</div>
+    return <><div className="games-grid" id="gamesGrid" aria-busy={loading}>{renderCards(filteredGames, 'standard')}</div>{!loading && filteredGames.length === 0 && <p className="auth-description">No hay juegos cargados que coincidan con estos filtros.</p>}</>
   }
 
   return (
@@ -84,7 +85,7 @@ export default function Catalog({
         <section className="home-section" key={section.id}>
           <div className="section-header">
             <h2><i className={section.icon}></i>{' '}{section.title}</h2>
-            <a href="All-games.html" className="see-more">{section.link}</a>
+            <a href="#all-games" className="see-more" onClick={event => { event.preventDefault(); document.getElementById('all-games')?.scrollIntoView({ behavior: 'smooth' }) }}>{section.link}</a>
           </div>
           <div className={section.className} id={section.id} aria-busy={loading}>
             {renderCards(filteredGames.filter(game => game[section.flag]), section.variant)}
