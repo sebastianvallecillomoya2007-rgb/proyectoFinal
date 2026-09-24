@@ -6,7 +6,9 @@
 2. En `proyecto/.env`, completa `RAWG_API_KEY=tu_clave`. `.env.example` sirve como plantilla; `.env` está excluido de Git.
 3. Reinicia `npm run dev` desde la carpeta `proyecto`. El servidor carga `.env` automáticamente. No uses un prefijo `VITE_` para la clave: solo debe estar en el servidor.
 
-Al abrir la tienda se importa la primera página de RAWG (40 juegos, ordenados por popularidad según `added`). **Cargar más juegos de RAWG** importa la siguiente página. Los juegos importados se conservan junto al catálogo existente en `server/data/commerce.json`. Sin clave o durante un fallo del proveedor, permanece disponible el catálogo guardado.
+Al abrir la tienda se importan en segundo plano hasta cinco páginas de RAWG (200 juegos, ordenados por popularidad según `added`) y tres colecciones de hasta 20 juegos cada una: novedades, próximos lanzamientos e independientes. Los duplicados se unifican. El catálogo guardado aparece inmediatamente y la pantalla se actualiza mientras termina la importación. **Descubrir más juegos** importa otra página; **Mostrar más juegos** pagina los resultados guardados en grupos de 24. Sin clave o durante un fallo del proveedor, permanece disponible el catálogo guardado.
+
+La portada incluye destacados, colecciones por género, ofertas, valoraciones y próximos lanzamientos. Cada juego tiene una ficha con los datos disponibles. Los filtros de plataforma y género se combinan con la búsqueda; se puede ordenar por popularidad, valoración, lanzamiento, precio y nombre.
 
 ## Fechas y plataformas
 

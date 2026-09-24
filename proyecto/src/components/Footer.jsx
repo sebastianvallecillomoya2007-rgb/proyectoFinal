@@ -1,12 +1,3 @@
-import '../css/principal.css'
-
-// El pie original pertenece al aside; se conserva su div y su ubicación.
-export default function Footer() {
-  return (
-    <div className="sidebar-footer">
-      <button className="btn-redeem">Redeem Code</button>
-      <a href="#" className="sidebar-link"><i className="fa-solid fa-headset"></i> Support</a>
-      <a href="#" className="sidebar-link"><i className="fa-solid fa-download"></i> Downloads</a>
-    </div>
-  )
+﻿export default function Footer() {
+  return <footer className="store-footer"><div><a className="brand" href="#/"><span className="brand-symbol">N</span>NEXUS<span>GAMES</span></a><p>Descubre mundos. Encuentra tu próxima partida.</p></div><div className="footer-links"><a href="#/?view=all">Catálogo</a><a href="#/?view=offers">Ofertas</a><a href="#/cuenta">Mi cuenta</a><a href="https://rawg.io" target="_blank" rel="noreferrer">Datos e imágenes: RAWG ↗</a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} NEXUS GAMES</span><span>Hecho para quienes disfrutan jugar.</span></div></footer>
 }

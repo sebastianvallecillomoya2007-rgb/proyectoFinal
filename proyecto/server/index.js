@@ -6,20 +6,13 @@ import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { createCommerce } from './commerce.js'
 import { createRawg } from './rawg.js'
+import { createCatalogSync } from './catalog-sync.js'
 
 const directory = process.env.AUTH_DATA_DIR || fileURLToPath(new URL('./data/', import.meta.url))
 mkdirSync(directory, { recursive: true })
 const commerce = createCommerce(directory)
 const rawg = createRawg({ key: process.env.RAWG_API_KEY, dates: process.env.RAWG_DATES, platforms: process.env.RAWG_PLATFORMS })
-let rawgStatus = { configured: rawg.configured, nextPage: 1, error: '' }
-let retryAfter = 0
-let firstPageLoaded = false
-async function importRawgPage(page) {
-  const result = await rawg.games(page)
-  commerce.importGames(result.games)
-  firstPageLoaded = true
-  rawgStatus = { configured: rawg.configured, nextPage: result.nextPage, count: result.count, error: '' }
-}
+const catalogSync = createCatalogSync(rawg, commerce)
 const file = resolve(directory, 'users.json')
 const sessions = new Map()
 const attempts = new Map()
@@ -76,11 +69,9 @@ export const server = createServer(async (req, res) => {
     if (path.startsWith('/api/admin/') && user?.role !== 'admin') return reply(res, user ? 403 : 401, { error: 'Se requiere una sesión de administrador.' })
     if (req.method === 'GET' && path === '/api/games') {
       const page = url.searchParams.get('rawgPage')
-      if (page) await importRawgPage(Number(page))
-      else if (rawg.configured && !firstPageLoaded && Date.now() > retryAfter) {
-        try { await importRawgPage(1) } catch (error) { rawgStatus.error = error.message; retryAfter = Date.now() + 60000 }
-      }
-      return reply(res, 200, { games: commerce.games(), rawg: rawgStatus })
+      if (page) await catalogSync.page(Number(page))
+      else void catalogSync.initialize()
+      return reply(res, 200, { games: commerce.games(), rawg: catalogSync.state })
     }
     if (req.method === 'GET' && path === '/api/platforms') return reply(res, 200, { platforms: await rawg.platforms() })
     if (req.method === 'GET' && path === '/api/admin/sales') return reply(res, 200, commerce.report(url.searchParams.get('period') || 'all'))

@@ -4,6 +4,7 @@ import Store from './components/Store'
 import Routing from './routes/Routing'
 import { api } from './auth/api'
 import './css/auth.css'
+import './css/store.css'
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('')

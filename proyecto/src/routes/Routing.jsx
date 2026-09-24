@@ -9,7 +9,7 @@ export default function Routing({ user, loading, onAuthenticated, children }) {
     window.addEventListener('hashchange', navigate)
     return () => window.removeEventListener('hashchange', navigate)
   }, [])
-  if (path === '/') return children
+  if (path.split('?')[0] === '/') return children
   if (loading) return <main className="account-page" role="status">Comprobando sesión…</main>
   if (path === '/admin' && user?.role === 'admin') return <AdminPage user={user} />
   if (path === '/cuenta' && user) return <main className="account-page"><section className="auth-card"><span className="auth-eyebrow">MI CUENTA</span><h1>Hola, {user.name}</h1><p className="auth-description">Has iniciado sesión correctamente.</p><dl className="account-details"><dt>Correo electrónico</dt><dd>{user.email}</dd><dt>Tipo de cuenta</dt><dd>{user.role === 'admin' ? 'Administrador' : 'Cliente'}</dd></dl><a href="#/" className="auth-link">Explorar la tienda →</a></section></main>

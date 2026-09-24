@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server/dev.js",
     "server": "node server/index.js",
-    "test": "node --test server/auth.test.js server/commerce.test.js server/rawg.test.js",
+    "test": "node --test server/auth.test.js server/commerce.test.js server/rawg.test.js server/catalog-sync.test.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -14,7 +14,8 @@ export function normalizeGame(game, now = Date.now()) {
     categories: [...new Set(categories.length ? categories : ['uncategorized'])],
     image: /^https:\/\//.test(game.background_image || '') ? game.background_image : '',
     platforms: (game.platforms || []).filter(item => item.platform?.id && item.platform?.name).map(({ platform }) => ({ id: platform.id, name: platform.name })),
-    released, rating: game.rating || 0,
+    released, rating: game.rating || 0, ratingsCount: game.ratings_count || 0,
+    popularity: game.added || 0, metacritic: game.metacritic || null,
     isUpcoming: Number.isFinite(releaseTime) && releaseTime > now,
     isNew: Number.isFinite(releaseTime) && releaseTime <= now && now - releaseTime < 90 * 86400000,
     isTopRated: (game.rating || 0) >= 4,
@@ -59,6 +60,19 @@ export function createRawg({ key = '', dates = '', platforms = '', fetcher = fet
   }
   return {
     configured,
+    async collection(kind) {
+      const today = new Date().toISOString().slice(0, 10)
+      const past = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10)
+      const future = new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10)
+      const filters = {
+        recent: { dates: dates || `${past},${today}`, ordering: '-added' },
+        upcoming: { dates: dates || `${today},${future}`, ordering: '-added' },
+        indie: { dates, genres: 'indie', ordering: '-added' },
+      }
+      if (!filters[kind]) fail(400, 'Colección inválida.')
+      const data = await request('games', { page_size: 20, platforms, ...filters[kind] })
+      return data.results.map(game => normalizeGame(game))
+    },
     async games(page = 1) {
       if (!Number.isInteger(page) || page < 1 || page > 10000) fail(400, 'Página de catálogo inválida.')
       if (dates && !/^\d{4}-\d{2}-\d{2},\d{4}-\d{2}-\d{2}$/.test(dates)) fail(400, 'RAWG_DATES debe usar el formato AAAA-MM-DD,AAAA-MM-DD.')
