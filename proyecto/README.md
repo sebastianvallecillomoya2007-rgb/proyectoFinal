@@ -1,3 +1,7 @@
+Base de datos: [BASE-DE-DATOS.md](./BASE-DE-DATOS.md).
+
+Consulta [OPENGAMES.md](./OPENGAMES.md) para configurar el nuevo proveedor, las fichas, los deseados y las reseñas.
+
 # NEXUS GAMES — React + Vite
 
 Para iniciar la tienda y el servidor de cuentas, ejecuta `npm run dev`. Consulta [CUENTAS.md](./CUENTAS.md) para las rutas de clientes y administradores, persistencia y comandos de verificación.

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { api } from './api'
 
-export default function AuthPage({ mode, onAuthenticated }) {
+export default function AuthPage({ mode, onAuthenticated, next }) {
   const register = mode === 'register'
   const admin = mode === 'admin'
+  const returnTo = typeof next === 'string' && (next.startsWith('/juego/') || next === '/deseados') ? next : '/cuenta'
+  const nextQuery = next ? '?next=' + encodeURIComponent(returnTo) : ''
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -21,7 +23,7 @@ export default function AuthPage({ mode, onAuthenticated }) {
     try {
       const { user } = await api(`/auth/${register ? 'register' : admin ? 'admin-login' : 'login'}`, values)
       onAuthenticated(user)
-      window.location.hash = user.role === 'admin' ? '/admin' : '/cuenta'
+      window.location.hash = user.role === 'admin' ? '/admin' : returnTo
     } catch (error) { setError(error.message) } finally { setBusy(false) }
   }
 
@@ -30,7 +32,8 @@ export default function AuthPage({ mode, onAuthenticated }) {
       <div className="auth-intro">
         <span className="auth-eyebrow">{admin ? 'NEXUS CONTROL' : 'TU PRÓXIMA PARTIDA EMPIEZA AQUÍ'}</span>
         <h1>{admin ? 'Acceso de administradores' : register ? 'Únete a NEXUS GAMES' : 'Bienvenido de vuelta'}</h1>
-        <p>{admin ? 'Accede al panel para consultar las cuentas de la comunidad.' : 'Crea tu cuenta y forma parte de la comunidad de NEXUS GAMES.'}</p>
+        <p>{admin ? 'Accede al panel para consultar las cuentas de la comunidad.' : 'Descubre tu próximo juego, guarda tus favoritos y comparte tu experiencia con la comunidad.'}</p>
+        {!admin && <ul className="auth-perks"><li><span aria-hidden="true">◇</span>Un universo de juegos por descubrir</li><li><span aria-hidden="true">♡</span>Tus favoritos, siempre a mano</li><li><span aria-hidden="true">☆</span>Tu experiencia cuenta</li></ul>}
         <a href="#/" className="auth-link">← Volver a la tienda</a>
       </div>
       <section className="auth-card" aria-labelledby="form-title">
@@ -46,7 +49,7 @@ export default function AuthPage({ mode, onAuthenticated }) {
           {error && <p className="auth-error" role="alert">{error}</p>}
           <button className="btn-buy auth-submit" disabled={busy}>{busy ? 'Procesando…' : register ? 'Crear mi cuenta' : admin ? 'Entrar al panel' : 'Iniciar sesión'}</button>
         </form>
-        {!admin && <p className="auth-switch">{register ? '¿Ya tienes una cuenta?' : '¿Aún no tienes cuenta?'} <a href={register ? '#/login' : '#/registro'}>{register ? 'Inicia sesión' : 'Crear cuenta'}</a></p>}
+        {!admin && <p className="auth-switch">{register ? '¿Ya tienes una cuenta?' : '¿Aún no tienes cuenta?'} <a href={(register ? '#/login' : '#/registro') + nextQuery}>{register ? 'Inicia sesión' : 'Crear cuenta'}</a></p>}
         <a className="auth-secondary" href={admin ? '#/login' : '#/admin/login'}>{admin ? 'Acceso para clientes' : 'Acceso para administradores'}</a>
       </section>
     </main>

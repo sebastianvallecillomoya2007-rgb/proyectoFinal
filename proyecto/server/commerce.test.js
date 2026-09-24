@@ -9,7 +9,7 @@ import { createCommerce } from './commerce.js'
 test('ventas, ofertas, rankings, periodos y persistencia', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'nexus-commerce-test-'))
   process.env.AUTH_DATA_DIR = directory
-  process.env.RAWG_API_KEY = ''
+  process.env.OPENGAMES_API_URL = ''
   process.env.ADMIN_EMAIL = 'admin@test.com'
   process.env.ADMIN_PASSWORD = 'Test-admin-927!'
   const { server } = await import('./index.js')
@@ -74,7 +74,7 @@ test('ventas, ofertas, rankings, periodos y persistencia', async () => {
     const reloaded = createCommerce(directory)
     assert.equal(reloaded.games().find(game => game.id === '1').price, 25)
     assert.equal(reloaded.report().purchases, 3)
-    const file = join(directory, 'commerce.json')
+    const file = join(directory, 'bd.json')
     const stored = JSON.parse(readFileSync(file, 'utf8'))
     stored.orders[0].createdAt = new Date(Date.now() - 40 * 86400000).toISOString()
     writeFileSync(file, JSON.stringify(stored))

@@ -88,7 +88,7 @@ export default function Catalog({
             <a href="#all-games" className="see-more" onClick={event => { event.preventDefault(); document.getElementById('all-games')?.scrollIntoView({ behavior: 'smooth' }) }}>{section.link}</a>
           </div>
           <div className={section.className} id={section.id} aria-busy={loading}>
-            {renderCards(filteredGames.filter(game => game[section.flag]), section.variant)}
+            {renderCards(filteredGames.filter(game => game[section.flag]).slice(0, 8), section.variant)}
           </div>
         </section>
       ))}

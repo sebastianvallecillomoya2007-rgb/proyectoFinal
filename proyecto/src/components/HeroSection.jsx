@@ -1,24 +1,30 @@
-﻿import { useState } from 'react'
-import GameImage from './GameImage'
-import { categoryLabel, gameCategories } from '../categories'
+﻿import { useEffect, useState } from 'react'
+import '../css/principal.css'
 
-export default function HeroSection({ games = [], onBuy, onDetails }) {
-  const choices = [...games].filter(game => game.image && !game.isUpcoming).sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 4)
-  const [selected, setSelected] = useState(0)
-  const game = choices[selected] || choices[0]
-  if (!game) return null
-  return <section className="discovery-hero" aria-label="Juegos destacados">
-    <div className="hero-feature">
-      <GameImage key={game.id} game={game} className="hero-art" eager />
-      <div className="hero-vignette" />
-      <div className="hero-copy"><span className="hero-pill"><span /> EN EL RADAR DE NEXUS</span>
-        <h2>{game.title}</h2>
-        <p>{gameCategories(game).map(categoryLabel).join(' / ')}{game.rating > 0 && ` · ★ ${game.rating.toFixed(1)} en RAWG`}</p>
-        <p className="hero-description">Tu próxima gran aventura empieza aquí. Descubre un nuevo mundo y elige cómo quieres jugar.</p>
-        <div className="hero-buttons"><button className="btn-buy" onClick={() => onDetails(game)}>Explorar juego <span>↗</span></button>{game.price != null && <button className="hero-price-button" onClick={() => onBuy(game)}>{game.isOffer && <del>${game.oldPrice.toFixed(2)}</del>} Comprar · ${game.price.toFixed(2)}</button>}</div>
-      </div>
-      <span className="hero-counter">0{choices.indexOf(game) + 1} <span>/ 0{choices.length}</span></span>
+export default function HeroSection({ games = [], onBuy }) {
+  const slides = games.filter(game => !game.isUpcoming && game.price != null).slice(0, 3)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [timerVersion, setTimerVersion] = useState(0)
+  useEffect(() => {
+    if (slides.length < 2) return
+    const interval = setInterval(() => setCurrentIndex(index => (index + 1) % slides.length), 5000)
+    return () => clearInterval(interval)
+  }, [slides.length, timerVersion])
+  if (!slides.length) return null
+  const activeIndex = currentIndex % slides.length
+  return <div className="hero-carousel" aria-label="Juegos destacados">
+    <div className="carousel-track" style={{ transform: `translateX(-${activeIndex * 100}%)` }}>
+      {slides.map((game, index) => <div key={game.id} className="slide" inert={index !== activeIndex} style={{ backgroundImage: `url('${game.image}')` }}>
+        <div className="slide-content">
+          <span className="badge-discount">{game.isOffer ? `${game.discount} DE DESCUENTO` : 'DISPONIBLE AHORA'}</span>
+          <h1 className="slide-title"><a href={'#/juego/' + encodeURIComponent(game.id)}>{game.title}</a></h1>
+          <p className="slide-desc">Descubre tu próxima aventura en NEXUS GAMES.</p>
+          {game.isOffer && <span className="old-price">${game.oldPrice.toFixed(2)}</span>}
+          <button className="btn-buy" onClick={() => onBuy?.(game)}>COMPRAR ${game.price.toFixed(2)}</button>
+          <a className="hero-detail-link" href={'#/juego/' + encodeURIComponent(game.id)}>Ver detalles →</a>
+        </div>
+      </div>)}
     </div>
-    <div className="hero-selection"><span className="section-kicker">SELECCIÓN DESTACADA</span>{choices.map((item, index) => <button key={item.id} className={`hero-choice ${game.id === item.id ? 'selected' : ''}`} aria-pressed={game.id === item.id} onClick={() => setSelected(index)}><GameImage game={item} /><span><strong>{item.title}</strong><small>{categoryLabel(gameCategories(item)[0])}</small></span><span className="choice-arrow">↗</span></button>)}<p>Grandes historias.<br /><strong>Tu siguiente partida.</strong></p></div>
-  </section>
+    <div className="carousel-dots">{slides.map((game, index) => <button key={game.id} className={activeIndex === index ? 'dot active' : 'dot'} aria-label={`Ver ${game.title}`} aria-pressed={activeIndex === index} onClick={() => { setCurrentIndex(index); setTimerVersion(value => value + 1) }} />)}</div>
+  </div>
 }

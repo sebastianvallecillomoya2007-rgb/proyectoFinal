@@ -14,7 +14,7 @@ Desde esta carpeta ejecuta `npm run dev`: inicia Vite y la API local en el puert
 
 En el primer inicio, el servidor crea `admin@nexusgames.com` con una contraseña aleatoria que muestra en la terminal una sola vez. Guarda esa contraseña. Opcionalmente puedes definir `ADMIN_EMAIL` y `ADMIN_PASSWORD` antes del primer inicio; no modifican una cuenta ya creada.
 
-Las cuentas persisten en `server/data/users.json`, excluido de Git. Las contraseñas usan scrypt con sal aleatoria. Las sesiones usan cookies HttpOnly y SameSite=Strict, duran ocho horas y se invalidan al cerrar sesión o reiniciar el servidor. El servidor verifica el rol en cada consulta del panel y siempre asigna el rol de cliente al registro público.
+Las cuentas persisten en `bd.json`, excluido de Git. Las contraseñas usan scrypt con sal aleatoria. Las sesiones usan cookies HttpOnly y SameSite=Strict, duran ocho horas y se invalidan al cerrar sesión o reiniciar el servidor. El servidor verifica el rol en cada consulta del panel y siempre asigna el rol de cliente al registro público.
 
 Este servidor con archivo JSON está pensado para el proyecto local y una sola instancia. Para publicarlo, usa HTTPS, `COOKIE_SECURE=true`, una base de datos y un proxy del mismo origen para `/api`; la API no forma parte de la compilación estática de Vite. No publiques el directorio de datos.
 
@@ -26,7 +26,7 @@ En **Precios y ofertas**, modifica el precio normal y activa una oferta con un i
 
 Para generar operaciones, inicia sesión como cliente, pulsa **Comprar** y confirma la **compra de prueba**. No hay pasarela de pago ni cobros reales. Cada operación registra una unidad; una repetición accidental de la misma solicitud no duplica la compra. El servidor comprueba el precio antes de guardar. Las estadísticas comienzan en cero, sin ventas inventadas.
 
-El catálogo se inicializa desde `public/db.json` una sola vez y luego se guarda junto con las compras en `server/data/commerce.json` (excluido de Git). Los cambios persisten al reiniciar. Cada compra conserva el precio de ese momento, aunque cambien las ofertas. Las rutas de estadísticas y edición de precios exigen una sesión de administrador.
+El catálogo se inicializa desde `public/db.json` una sola vez y luego se guarda junto con las compras en `bd.json` (excluido de Git). Los cambios persisten al reiniciar. Cada compra conserva el precio de ese momento, aunque cambien las ofertas. Las rutas de estadísticas y edición de precios exigen una sesión de administrador.
 
 ## Verificación
 

@@ -1,19 +1,19 @@
 import './env.js'
 import { createServer } from 'node:http'
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto'
-import { mkdirSync, existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
+import { createDatabase, defaultDirectory } from './database.js'
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { createCommerce } from './commerce.js'
-import { createRawg } from './rawg.js'
-import { createCatalogSync } from './catalog-sync.js'
+import { createOpenGames, createOpenGamesSync } from './opengames.js'
+import { createCommunity } from './community.js'
 
-const directory = process.env.AUTH_DATA_DIR || fileURLToPath(new URL('./data/', import.meta.url))
-mkdirSync(directory, { recursive: true })
+const directory = process.env.AUTH_DATA_DIR || defaultDirectory
+const database = createDatabase(directory)
 const commerce = createCommerce(directory)
-const rawg = createRawg({ key: process.env.RAWG_API_KEY, dates: process.env.RAWG_DATES, platforms: process.env.RAWG_PLATFORMS })
-const catalogSync = createCatalogSync(rawg, commerce)
-const file = resolve(directory, 'users.json')
+const openGames = createOpenGames({ baseUrl: process.env.OPENGAMES_API_URL ?? process.env.VITE_API_URL, fallbackUrl: process.env.OPENGAMES_FALLBACK_URL })
+const catalogSync = createOpenGamesSync(openGames, commerce)
+const community = createCommunity(directory, commerce)
 const sessions = new Map()
 const attempts = new Map()
 const lifetime = 8 * 60 * 60 * 1000
@@ -24,10 +24,9 @@ function passwordHash(password, salt = randomBytes(16).toString('hex')) {
 function matches(password, stored) {
   return timingSafeEqual(Buffer.from(passwordHash(password, stored.split(':')[0])), Buffer.from(stored))
 }
-let users = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : []
+const users = database.read().users
 function save() {
-  writeFileSync(`${file}.tmp`, JSON.stringify(users, null, 2), { mode: 0o600 })
-  renameSync(`${file}.tmp`, file)
+  database.update(current => ({ ...current, users }))
 }
 if (!users.some(user => user.role === 'admin')) {
   const password = process.env.ADMIN_PASSWORD || randomBytes(18).toString('base64url')
@@ -68,12 +67,31 @@ export const server = createServer(async (req, res) => {
     const user = session?.expires > Date.now() ? users.find(item => item.id === session.userId) : null
     if (path.startsWith('/api/admin/') && user?.role !== 'admin') return reply(res, user ? 403 : 401, { error: 'Se requiere una sesión de administrador.' })
     if (req.method === 'GET' && path === '/api/games') {
-      const page = url.searchParams.get('rawgPage')
-      if (page) await catalogSync.page(Number(page))
-      else void catalogSync.initialize()
-      return reply(res, 200, { games: commerce.games(), rawg: catalogSync.state })
+      void catalogSync.initialize()
+      return reply(res, 200, { games: commerce.games(), catalog: catalogSync.state })
     }
-    if (req.method === 'GET' && path === '/api/platforms') return reply(res, 200, { platforms: await rawg.platforms() })
+    if (req.method === 'GET' && path === '/api/platforms') return reply(res, 200, { platforms: [...new Map(commerce.games().flatMap(game => game.platforms || []).map(item => [item.id, item])).values()] })
+    if (path === '/api/wishlist' && ['GET', 'POST'].includes(req.method)) {
+      if (!user) return reply(res, 401, { error: 'Inicia sesión para guardar tus juegos.' })
+      return reply(res, 200, req.method === 'GET' ? { games: community.wishlist(user.id) } : community.setWishlist(user.id, await body(req)))
+    }
+    if (req.method === 'POST' && /^\/api\/games\/[^/]+\/reviews$/.test(path)) {
+      if (user?.role !== 'client') return reply(res, user ? 403 : 401, { error: 'Inicia sesión como cliente para publicar una reseña.' })
+      return reply(res, 200, { reviews: community.review(user, decodeURIComponent(path.split('/')[3]), await body(req)) })
+    }
+    if (req.method === 'GET' && /^\/api\/games\/[^/]+$/.test(path)) {
+      const id = decodeURIComponent(path.split('/')[3])
+      let game = commerce.games().find(item => item.id === id)
+      if (!game) return reply(res, 404, { error: 'Juego no encontrado. Abre el catálogo para actualizar los juegos disponibles.' })
+      let notice = ''
+      if (game.source === 'opengames' && openGames.configured) {
+        try {
+          commerce.importOpenGames([await openGames.detail(game.slug)])
+          game = commerce.games().find(item => item.id === id)
+        } catch (error) { notice = error.message }
+      }
+      return reply(res, 200, { game, notice, reviews: community.reviews(id, user?.id), saved: user ? community.wishlist(user.id).some(item => item.id === id) : false })
+    }
     if (req.method === 'GET' && path === '/api/admin/sales') return reply(res, 200, commerce.report(url.searchParams.get('period') || 'all'))
     if (req.method === 'POST' && /^\/api\/admin\/games\/[^/]+\/price$/.test(path)) {
       return reply(res, 200, { game: commerce.updatePrice(decodeURIComponent(path.split('/')[4]), await body(req)) })

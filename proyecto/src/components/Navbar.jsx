@@ -1,21 +1,34 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import '../css/principal.css'
 
 export default function Navbar({ onSearchChange, user, onLogout, loading }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [hash, setHash] = useState(window.location.hash)
+  const [path, setPath] = useState(window.location.hash)
   useEffect(() => {
-    const update = () => setHash(window.location.hash)
-    window.addEventListener('hashchange', update)
-    return () => window.removeEventListener('hashchange', update)
+    const navigate = () => setPath(window.location.hash)
+    window.addEventListener('hashchange', navigate)
+    return () => window.removeEventListener('hashchange', navigate)
   }, [])
   function search(event) {
-    setSearchQuery(event.target.value)
-    onSearchChange(event.target.value.trim().toLowerCase())
-    if (event.target.value) window.location.hash = '/?view=all'
+    const value = event.target.value
+    setSearchQuery(value)
+    onSearchChange(value.toLowerCase().trim())
+    if (window.location.hash !== '#/') window.location.hash = '/'
   }
-  return <header className="nexus-header"><a className="brand" href="#/" aria-label="NEXUS GAMES, inicio"><span className="brand-symbol">N</span>NEXUS<span>GAMES</span></a>
-    <nav aria-label="Navegación principal"><a href="#/" className={!hash || hash === '#/' ? 'active' : ''}>Descubrir</a><a href="#/?view=all" className={hash.includes('view=all') ? 'active' : ''}>Catálogo</a><a href="#/?view=offers" className={hash.includes('view=offers') ? 'active' : ''}>Ofertas <span className="nav-offer-dot" /></a></nav>
-    <div className="header-actions"><div className="search-box"><span aria-hidden="true">⌕</span><input type="search" aria-label="Buscar juegos" placeholder="Encuentra tu próximo juego…" value={searchQuery} onChange={search} /></div><a className="admin-access" href={user?.role === 'admin' ? '#/admin' : '#/admin/login'} aria-label="Administración" title="Administración">⚙</a><div className="account-actions">{loading ? <span className="session-loading">Conectando…</span> : user ? <><a className="account-name" href="#/cuenta">{user.name}</a><button className="logout-button" onClick={onLogout}>Salir</button></> : <><a className="login-link" href="#/login">Ingresar</a><a className="account-register" href="#/registro">Crear cuenta ↗</a></>}</div></div>
+  return <header className="site-header">
+    <a className="logo" href="#/" aria-label="NEXUS GAMES, inicio">NEXUS GAMES</a>
+    <nav className="main-navigation" aria-label="Navegación principal">
+      <a className={!path || path === '#/' ? 'active' : ''} href="#/">Tienda</a>
+      <a className={path === '#/deseados' ? 'active' : ''} href="#/deseados">Deseados</a>
+      <a className={path.startsWith('#/admin') ? 'active' : ''} href={user?.role === 'admin' ? '#/admin' : '#/admin/login'}>Administración</a>
+      {loading ? <span className="nav-session" role="status">Conectando…</span> : user ? <>
+        <a href="#/cuenta" className={path === '#/cuenta' ? 'active account-name' : 'account-name'}>{user.name}</a>
+        <button className="nav-logout" onClick={onLogout}>Cerrar sesión</button>
+      </> : <>
+        <a className={path === '#/login' ? 'active nav-login' : 'nav-login'} href="#/login">Iniciar sesión</a>
+        <a className="account-register" href="#/registro">Crear cuenta</a>
+      </>}
+    </nav>
+    <div className="search-box"><i aria-hidden="true" className="fa-solid fa-magnifying-glass" /><input type="search" aria-label="Buscar juegos" placeholder="Buscar juegos…" value={searchQuery} onChange={search} /></div>
   </header>
 }

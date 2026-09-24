@@ -7,7 +7,7 @@ import { join, resolve, dirname, basename } from 'node:path'
 test('registro, sesiones, separación de roles y persistencia', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'nexus-auth-test-'))
   process.env.AUTH_DATA_DIR = directory
-  process.env.RAWG_API_KEY = ''
+  process.env.OPENGAMES_API_URL = ''
   process.env.ADMIN_EMAIL = 'admin@test.com'
   process.env.ADMIN_PASSWORD = 'Test-admin-927!'
   const { server } = await import('./index.js')
@@ -53,7 +53,7 @@ test('registro, sesiones, separación de roles y persistencia', async () => {
     assert.equal((await request('/auth/logout', {}, adminLogin.cookie, 'https://other.example')).status, 403)
     assert.equal((await request('/auth/logout', {}, adminLogin.cookie, base)).status, 200)
     assert.equal((await request('/admin/users', null, adminLogin.cookie)).status, 401)
-    const stored = JSON.parse(readFileSync(join(directory, 'users.json'), 'utf8'))
+    const stored = JSON.parse(readFileSync(join(directory, 'bd.json'), 'utf8')).users
     assert.equal(stored.length, 2)
     assert.ok(stored.every(user => /^[a-f0-9]{32}:[a-f0-9]{128}$/.test(user.password)))
     assert.ok(!JSON.stringify(stored).includes(client.password))

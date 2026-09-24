@@ -1,5 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { createDatabase } from './database.js'
 import { randomUUID } from 'node:crypto'
 
 function fail(status, message) {
@@ -13,23 +12,22 @@ function cents(value) {
 }
 
 export function createCommerce(directory) {
-  const file = resolve(directory, 'commerce.json')
-  const seed = () => JSON.parse(readFileSync(new URL('../public/db.json', import.meta.url), 'utf8')).games.map(game => ({
-    ...game,
-    basePrice: game.isOffer ? game.oldPrice : game.price,
-    oldPrice: game.isOffer ? game.oldPrice : null,
-    discount: game.isOffer ? `-${Math.round((1 - game.price / game.oldPrice) * 100)}%` : null,
-  }))
-  let state = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : { games: seed(), orders: [] }
-  function commit(next) {
-    writeFileSync(`${file}.tmp`, JSON.stringify(next, null, 2), { mode: 0o600 })
-    renameSync(`${file}.tmp`, file)
-    state = next
-  }
-  if (!existsSync(file)) commit(state)
+  const database = createDatabase(directory)
+  const commit = next => database.update(current => ({ ...current, games: next.games, orders: next.orders }))
   return {
-    games: () => state.games.map(game => ({ ...game, categories: game.categories?.length ? game.categories : [game.category || 'uncategorized'] })),
+    games: () => database.read().games.map(game => ({ ...game, categories: game.categories?.length ? game.categories : [game.category || 'uncategorized'] })),
+    importOpenGames(incoming) {
+      const state = database.read()
+      const games = [...state.games]
+      for (const metadata of incoming) {
+        const index = games.findIndex(game => game.id === metadata.id)
+        if (index >= 0) games[index] = { ...games[index], ...metadata }
+        else games.push({ ...metadata, price: null, basePrice: null, isOffer: false, oldPrice: null, discount: null })
+      }
+      if (JSON.stringify(games) !== JSON.stringify(state.games)) commit({ ...state, games })
+    },
     importGames(incoming) {
+      const state = database.read()
       const games = [...state.games]
       const canonical = title => title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '')
       for (const metadata of incoming) {
@@ -44,6 +42,7 @@ export function createCommerce(directory) {
       if (JSON.stringify(games) !== JSON.stringify(state.games)) commit({ ...state, games })
     },
     updatePrice(id, data) {
+      const state = database.read()
       const game = state.games.find(item => item.id === id)
       if (!game) fail(404, 'Juego no encontrado.')
       const base = cents(data?.basePrice)
@@ -55,6 +54,7 @@ export function createCommerce(directory) {
       return updated
     },
     purchase(user, data) {
+      const state = database.read()
       if (!/^[a-f0-9-]{36}$/i.test(data?.requestId || '')) fail(400, 'Identificador de compra inválido.')
       const existing = state.orders.find(order => order.userId === user.id && order.requestId === data.requestId)
       if (existing) {
@@ -71,6 +71,7 @@ export function createCommerce(directory) {
       return order
     },
     report(period = 'all') {
+      const state = database.read()
       if (!['all', '7', '30'].includes(period)) fail(400, 'Periodo inválido.')
       const since = period === 'all' ? 0 : Date.now() - Number(period) * 86400000
       const orders = state.orders.filter(order => Date.parse(order.createdAt) >= since)
