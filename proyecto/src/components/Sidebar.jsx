@@ -6,7 +6,7 @@ export default function Sidebar({ children }) {
       <div>
         <div className="category-title">CATEGORIES</div>
         <ul className="category-list">
-          <li><a href="principal.html" className="category-item active"><i className="fa-solid fa-border-all"></i> principal</a></li>
+          <li><a href="#/" className="category-item active"><i className="fa-solid fa-border-all"></i> principal</a></li>
           <li><a href="All-games.html" className="category-item"><i className="fa-solid fa-border-all"></i> All Games</a></li>
           <li><a href="Action.html" className="category-item"><i className="fa-solid fa-bolt"></i> Action</a></li>
           <li><a href="rpg.html" className="category-item"><i className="fa-solid fa-shield-halved"></i> RPG</a></li>

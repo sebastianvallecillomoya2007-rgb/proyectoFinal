@@ -1,4 +1,6 @@
-# React + Vite
+# NEXUS GAMES — React + Vite
+
+Para iniciar la tienda y el servidor de cuentas, ejecuta `npm run dev`. Consulta [CUENTAS.md](./CUENTAS.md) para las rutas de clientes y administradores, persistencia y comandos de verificación.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
