@@ -1,3 +1,4 @@
+import { t } from '../language'
 import { useEffect, useState } from 'react'
 import { getGames } from '../service/gamesService'
 import HeroSection from './HeroSection'
@@ -7,6 +8,7 @@ import Sidebar from './Sidebar'
 import Footer from './Footer'
 import PurchaseDialog from './PurchaseDialog'
 import { categoryLabel, gameCategories, matchesCategory } from '../categories'
+import { searchWithAI } from '../service/semanticService'
 
 export default function Store({ user, searchQuery }) {
   const [games, setGames] = useState([])
@@ -44,7 +46,22 @@ export default function Store({ user, searchQuery }) {
   const categories = [...new Set(games.flatMap(gameCategories))].sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b), 'es'))
   const platforms = [...new Map(games.flatMap(game => game.platforms || []).map(item => [item.id, item])).values()].sort((a, b) => a.name.localeCompare(b.name))
   const query = searchQuery.toLowerCase().trim()
-  const visible = games.filter(game => matchesCategory(game, category) && (platform === 'all' || game.platforms?.some(item => String(item.id) === platform)) && (game.title + ' ' + (game.description || '')).toLowerCase().includes(query))
+  const [ai, setAI] = useState(null)
+  const aiCatalog = JSON.stringify(games.filter(game => matchesCategory(game, category) && (platform === 'all' || game.platforms?.some(item => String(item.id) === platform))).map(({ id, title, description, categories }) => ({ id, title, description, categories })))
+  useEffect(() => {
+    if (order !== 'ai' || !query || aiCatalog === '[]') return
+    let cancel
+    const timer = setTimeout(() => {
+      try { cancel = searchWithAI(JSON.parse(aiCatalog), query, result => setAI({ ...result, query, catalog: aiCatalog })) }
+      catch { setAI({ query, catalog: aiCatalog, error: 'No se pudo iniciar la IA. Se conserva la búsqueda normal.' }) }
+    }, 450)
+    return () => { clearTimeout(timer); cancel?.() }
+  }, [order, query, aiCatalog])
+  const currentAI = order === 'ai' && ai?.query === query && ai?.catalog === aiCatalog ? ai : null
+  const aiIds = currentAI?.results?.map(item => item.id)
+  const aiMessage = order !== 'ai' ? '' : !query ? 'Escribe lo que te gustaría jugar en el buscador para usar la IA.' : currentAI?.error || currentAI?.status || 'Preparando búsqueda con IA…'
+  const visible = games.filter(game => matchesCategory(game, category) && (platform === 'all' || game.platforms?.some(item => String(item.id) === platform)) && (aiIds ? aiIds.includes(game.id) : (game.title + ' ' + (game.description || '')).toLowerCase().includes(query)))
+  if (order === 'ai' && aiIds) visible.sort((a, b) => aiIds.indexOf(a.id) - aiIds.indexOf(b.id))
   if (order === 'title') visible.sort((a, b) => a.title.localeCompare(b.title))
   if (order === 'stars') visible.sort((a, b) => (b.stars || 0) - (a.stars || 0))
   if (order === 'price') visible.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))
@@ -57,25 +74,25 @@ export default function Store({ user, searchQuery }) {
   return <div className="container">
     <Sidebar categories={categories} category={category} onCategoryChange={value => { setCategory(value); setLimit(24) }}><Footer /></Sidebar>
     <main className="store-home">
-      {message && <p className="commerce-success" role="status">{message}</p>}
-      {error && <p className="auth-error" role="alert">{error}</p>}
-      {catalog?.error && <p className="catalog-notice" role="status">{catalog.error}</p>}
-      {catalog?.syncing && <p className="catalog-notice" role="status">Ampliando el catálogo de OpenGames… {catalog.imported}{catalog.total != null && ' de ' + catalog.total} juegos importados. Puedes seguir explorando.</p>}
-      {loading ? <p role="status">Cargando tienda…</p> : <>
+      {message && <p className="commerce-success" role="status">{t(message)}</p>}
+      {error && <p className="auth-error" role="alert">{t(error)}</p>}
+      {catalog?.error && <p className="catalog-notice" role="status">{t(catalog.error)}</p>}
+      {catalog?.syncing && <p className="catalog-notice" role="status">{t("Ampliando el catálogo de OpenGames… ")}{t(catalog.imported)}{catalog.total != null && t(' de ' + catalog.total)}{t(" juegos importados. Puedes seguir explorando.")}</p>}
+      {loading ? <p role="status">{t("Cargando tienda…")}</p> : <>
         {!filtered && <><HeroSection games={games} onBuy={buy} /><Catalog games={games} onAddToCart={buy} /></>}
         <section className="home-section" id="all-games">
-          <div className="section-header"><h2>{category === 'all' ? 'Todos los juegos' : categoryLabel(category)}</h2><button className="btn-redeem" onClick={() => setRevision(value => value + 1)}>Actualizar tienda</button></div>
+          <div className="section-header"><h2>{category === 'all' ? t('Todos los juegos') : t(categoryLabel(category))}</h2><button className="btn-redeem" onClick={() => setRevision(value => value + 1)}>{t("Actualizar tienda")}</button></div>
           <div className="catalog-toolbar">
-            <label className="admin-search" htmlFor="catalog-platform">Plataforma<select id="catalog-platform" value={platform} onChange={event => { setPlatform(event.target.value); setLimit(24) }}><option value="all">Todas las plataformas</option>{platforms.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-            <label className="admin-search" htmlFor="catalog-order">Ordenar por<select id="catalog-order" value={order} onChange={event => { setOrder(event.target.value); setLimit(24) }}><option value="featured">Destacados</option><option value="title">Nombre A–Z</option><option value="stars">Estrellas en GitHub</option><option value="price">Menor precio</option></select></label>
-            <p className="auth-description" role="status">{visible.length} resultados · {games.length} juegos en el catálogo</p>
+            <label className="admin-search" htmlFor="catalog-platform">{t("Plataforma")}<select id="catalog-platform" value={platform} onChange={event => { setPlatform(event.target.value); setLimit(24) }}><option value="all">{t("Todas las plataformas")}</option>{platforms.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+            <label className="admin-search" htmlFor="catalog-order">{t("Ordenar por")}<select id="catalog-order" value={order} onChange={event => { setOrder(event.target.value); setLimit(24) }}><option value="featured">{t("Destacados")}</option><option value="title">{t("Nombre A–Z")}</option><option value="stars">{t("Estrellas en GitHub")}</option><option value="price">{t("Menor precio")}</option><option value="ai">{t("Afinidad con tu búsqueda (IA)")}</option></select></label>
+            <p className="auth-description" role="status">{t(visible.length)}{t(" resultados · ")}{t(games.length)}{t(" juegos en el catálogo")}{aiMessage && <><br />{t(aiMessage)}</>}</p>
           </div>
           <Catalog games={visible.slice(0, limit)} view="grid" onAddToCart={buy} />
-          {visible.length > limit && <button className="btn-buy catalog-load-more" onClick={() => setLimit(value => value + 24)}>Mostrar más juegos ({visible.length - limit} restantes)</button>}
-          {!visible.length && catalog?.syncing && <p className="auth-description">La búsqueda se ampliará a medida que se complete la importación.</p>}
+          {visible.length > limit && <button className="btn-buy catalog-load-more" onClick={() => setLimit(value => value + 24)}>{t("Mostrar más juegos (")}{t(visible.length - limit)}{t(" restantes)")}</button>}
+          {!visible.length && catalog?.syncing && <p className="auth-description">{t("La búsqueda se ampliará a medida que se complete la importación.")}</p>}
         </section>
         {!filtered && <FeaturedLists games={games} onBuy={buy} />}
-        <p className="catalog-attribution">Catálogo ampliado con <a href="https://www.open-source-games.com" target="_blank" rel="noreferrer">OpenGames</a>. Los precios disponibles corresponden a la tienda.</p>
+        <p className="catalog-attribution">{t("Catálogo ampliado con ")}<a href="https://www.open-source-games.com" target="_blank" rel="noreferrer">{t("OpenGames")}</a>{t(". Los precios disponibles corresponden a la tienda.")}</p>
       </>}
       {selected && <PurchaseDialog key={selected.id} game={selected} onClose={() => setSelected(null)} onPurchased={order => { setSelected(null); setMessage('Compra de prueba registrada: ' + order.title + ' · $' + (order.totalCents / 100).toFixed(2) + ' USD.') }} />}
     </main>

@@ -7,7 +7,7 @@ const collections = ['games', 'users', 'orders', 'wishlist', 'reviews']
 const readJson = file => JSON.parse(readFileSync(file, 'utf8').replace(/^\uFEFF/, ''))
 function validate(data) {
   if (!data || typeof data !== 'object' || collections.some(key => !Array.isArray(data[key]))) {
-    throw new Error('bd.json debe contener games, users, orders, wishlist y reviews como listas.')
+    throw new Error('db.json debe contener games, users, orders, wishlist y reviews como listas.')
   }
   return data
 }
@@ -23,12 +23,18 @@ function seedGames() {
 export function createDatabase(directory = defaultDirectory) {
   directory = resolve(directory)
   mkdirSync(directory, { recursive: true })
-  const file = resolve(directory, 'bd.json')
+  const storage = directory === resolve(defaultDirectory) ? resolve(directory, 'server/data') : directory
+  mkdirSync(storage, { recursive: true })
+  const file = resolve(storage, 'db.json')
   const legacyDirectory = directory === resolve(defaultDirectory) ? resolve(directory, 'server/data') : directory
   function write(data) {
     validate(data)
     writeFileSync(file + '.tmp', JSON.stringify(data, null, 2) + '\n', { mode: 0o600 })
     renameSync(file + '.tmp', file)
+  }
+  if (!existsSync(file)) {
+    const previous = resolve(directory, 'bd.json')
+    if (existsSync(previous)) write(readJson(previous))
   }
   if (!existsSync(file)) {
     const legacy = name => {

@@ -1,3 +1,4 @@
+import { t } from '../language'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../auth/api'
 
@@ -21,11 +22,11 @@ export default function PurchaseDialog({ game, onClose, onPurchased }) {
     } catch (error) { setError(error.message) } finally { setBusy(false) }
   }
   return <dialog ref={dialog} className="purchase-dialog auth-card" aria-labelledby="purchase-title" onCancel={event => { event.preventDefault(); if (!busy) onClose() }}>
-    <span className="auth-eyebrow">NEXUS CHECKOUT</span>
-    <h2 id="purchase-title">Confirmar compra de prueba</h2>
-    <p className="auth-description">Esta operación se registrará en las estadísticas. No se realizará ningún cobro.</p>
-    <p>{game.title}</p><p className="purchase-total">Total: ${game.price.toFixed(2)} USD</p>
-    {error && <p role="alert" className="auth-error">{error}</p>}
-    <div className="purchase-actions"><button className="btn-redeem" onClick={onClose} disabled={busy}>Cancelar</button><button className="btn-buy" onClick={confirm} disabled={busy}>{busy ? 'Registrando…' : 'Confirmar compra de prueba'}</button></div>
+    <span className="auth-eyebrow">{t("NEXUS CHECKOUT")}</span>
+    <h2 id="purchase-title">{t("Confirmar compra de prueba")}</h2>
+    <p className="auth-description">{t("Esta operación se registrará en las estadísticas. No se realizará ningún cobro.")}</p>
+    <p>{game.title}</p><p className="purchase-total">{t("Total: $")}{t(game.price.toFixed(2))}{t(" USD")}</p>
+    {error && <p role="alert" className="auth-error">{t(error)}</p>}
+    <div className="purchase-actions"><button className="btn-redeem" onClick={onClose} disabled={busy}>{t("Cancelar")}</button><button className="btn-buy" onClick={confirm} disabled={busy}>{busy ? t('Registrando…') : t('Confirmar compra de prueba')}</button></div>
   </dialog>
 }

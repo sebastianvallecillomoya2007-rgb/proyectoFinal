@@ -1,30 +1,28 @@
-import { useEffect, useState } from 'react'
+import { t } from '../language'
+import { useEffect } from 'react'
+import { Route, Routes, useLocation, useParams } from 'react-router-dom'
 import AuthPage from '../auth/AuthPage'
 import AdminPage from '../admin/AdminPage'
 import GamePage from '../pages/GamePage'
 import WishlistPage from '../pages/WishlistPage'
-
+import ProfilePage from '../pages/ProfilePage'
+import RequireSession from './RequireSession'
+function GameRoute({ user }) {
+  const { id } = useParams()
+  return <GamePage key={id + (user?.id || '')} id={id} user={user} />
+}
 export default function Routing({ user, loading, onAuthenticated, children }) {
-  const [path, setPath] = useState(() => window.location.hash.slice(1) || '/')
-  useEffect(() => {
-    const navigate = () => { setPath(window.location.hash.slice(1) || '/'); window.scrollTo(0, 0) }
-    window.addEventListener('hashchange', navigate)
-    return () => window.removeEventListener('hashchange', navigate)
-  }, [])
-  const route = path.split('?')[0]
-  if (route === '/') return children
-  if (loading) return <main className="account-page" role="status">Comprobando sesión…</main>
-  if (route.startsWith('/juego/')) {
-    let id
-    try { id = decodeURIComponent(route.slice('/juego/'.length)) } catch { id = '' }
-    return <GamePage key={id + (user?.id || '')} id={id} user={user} />
-  }
-  if (route === '/deseados') return <WishlistPage key={user?.id || 'guest'} user={user} />
-  if (route === '/admin' && user?.role === 'admin') return <AdminPage user={user} />
-  if (route === '/cuenta' && user) return <main className="account-page"><section className="auth-card"><span className="auth-eyebrow">MI CUENTA</span><h1>Hola, {user.name}</h1><p className="auth-description">Has iniciado sesión correctamente.</p><dl className="account-details"><dt>Correo electrónico</dt><dd>{user.email}</dd><dt>Tipo de cuenta</dt><dd>{user.role === 'admin' ? 'Administrador' : 'Cliente'}</dd></dl><a href="#/" className="auth-link">Explorar la tienda →</a></section></main>
-  if (['/login', '/registro', '/admin/login', '/admin', '/cuenta'].includes(route)) {
-    const mode = route.startsWith('/admin') ? 'admin' : route === '/registro' ? 'register' : 'login'
-    return <AuthPage key={mode} mode={mode} next={new URLSearchParams(path.split('?')[1]).get('next')} onAuthenticated={onAuthenticated} />
-  }
-  return <main className="account-page"><h1>Página no encontrada</h1><a className="auth-link" href="#/">Volver a la tienda</a></main>
+  const location = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
+  const next = new URLSearchParams(location.search).get('next')
+  const protect = (element, role) => <RequireSession user={user} loading={loading} role={role}>{t(element)}</RequireSession>
+  return <Routes>
+    <Route path="/" element={children} />
+    <Route path="/juego/:id" element={<GameRoute user={user} />} />
+    <Route path="/deseados" element={protect(<WishlistPage key={user?.id} user={user} />)} />
+    <Route path="/admin" element={protect(<AdminPage user={user} />, 'admin')} />
+    <Route path="/cuenta" element={protect(user?.role === 'client' ? <ProfilePage key={user.id} user={user} /> : <main className="account-page"><section className="auth-card"><span className="auth-eyebrow">{t("MI CUENTA")}</span><h1>{t("Hola, ")}{user?.name}</h1><p className="auth-description">{t("Has iniciado sesión correctamente.")}</p><dl className="account-details"><dt>{t("Correo electrónico")}</dt><dd>{user?.email}</dd><dt>{t("Tipo de cuenta")}</dt><dd>{t("Administrador")}</dd></dl><a href="#/" className="auth-link">{t("Explorar la tienda →")}</a></section></main>)} />
+    {[['/login', 'login'], ['/registro', 'register'], ['/admin/login', 'admin']].map(([path, mode]) => <Route key={path} path={path} element={<AuthPage key={mode} mode={mode} next={next} onAuthenticated={onAuthenticated} />} />)}
+    <Route path="*" element={<main className="account-page"><h1>{t("Página no encontrada")}</h1><a className="auth-link" href="#/">{t("Volver a la tienda")}</a></main>} />
+  </Routes>
 }

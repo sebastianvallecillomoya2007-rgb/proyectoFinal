@@ -1,0 +1,82 @@
+{
+  "name": "NEXUS - Bienvenida tras registro",
+  "active": false,
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Recibir evento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "nexus-registro",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexus-registro",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "process",
+      "name": "Procesar evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const event = $json.body;\nif (event?.type !== 'user.registered' || typeof event.user?.id !== 'string' || typeof event.user?.name !== 'string') {\n  return { json: { status: 400, error: 'Se requiere user.registered y un usuario con id y nombre.' } };\n}\nreturn { json: { status: 200, event: 'onboarding.ready', userId: event.user.id,\n  message: 'Bienvenido, ' + event.user.name + '. Tu cuenta de NEXUS GAMES esta lista.',\n  steps: [{ label: 'Explorar juegos', path: '/' }, { label: 'Completar perfil', path: '/cuenta' }, { label: 'Guardar favoritos', path: '/deseados' }] } };"
+      }
+    },
+    {
+      "id": "reply",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.status }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Recibir evento": {
+      "main": [
+        [
+          {
+            "node": "Procesar evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar evento": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

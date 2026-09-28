@@ -10,6 +10,8 @@ test('registro, sesiones, separación de roles y persistencia', async () => {
   process.env.OPENGAMES_API_URL = ''
   process.env.ADMIN_EMAIL = 'admin@test.com'
   process.env.ADMIN_PASSWORD = 'Test-admin-927!'
+  process.env.N8N_REGISTRATION_URL = ''
+  process.env.N8N_PURCHASE_URL = ''
   const { server } = await import('./index.js')
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   const base = `http://127.0.0.1:${server.address().port}`
@@ -53,7 +55,7 @@ test('registro, sesiones, separación de roles y persistencia', async () => {
     assert.equal((await request('/auth/logout', {}, adminLogin.cookie, 'https://other.example')).status, 403)
     assert.equal((await request('/auth/logout', {}, adminLogin.cookie, base)).status, 200)
     assert.equal((await request('/admin/users', null, adminLogin.cookie)).status, 401)
-    const stored = JSON.parse(readFileSync(join(directory, 'bd.json'), 'utf8')).users
+    const stored = JSON.parse(readFileSync(join(directory, 'db.json'), 'utf8')).users
     assert.equal(stored.length, 2)
     assert.ok(stored.every(user => /^[a-f0-9]{32}:[a-f0-9]{128}$/.test(user.password)))
     assert.ok(!JSON.stringify(stored).includes(client.password))

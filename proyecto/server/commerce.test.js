@@ -12,6 +12,8 @@ test('ventas, ofertas, rankings, periodos y persistencia', async () => {
   process.env.OPENGAMES_API_URL = ''
   process.env.ADMIN_EMAIL = 'admin@test.com'
   process.env.ADMIN_PASSWORD = 'Test-admin-927!'
+  process.env.N8N_REGISTRATION_URL = ''
+  process.env.N8N_PURCHASE_URL = ''
   const { server } = await import('./index.js')
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   const base = `http://127.0.0.1:${server.address().port}/api`
@@ -74,7 +76,7 @@ test('ventas, ofertas, rankings, periodos y persistencia', async () => {
     const reloaded = createCommerce(directory)
     assert.equal(reloaded.games().find(game => game.id === '1').price, 25)
     assert.equal(reloaded.report().purchases, 3)
-    const file = join(directory, 'bd.json')
+    const file = join(directory, 'db.json')
     const stored = JSON.parse(readFileSync(file, 'utf8'))
     stored.orders[0].createdAt = new Date(Date.now() - 40 * 86400000).toISOString()
     writeFileSync(file, JSON.stringify(stored))

@@ -1,30 +1,32 @@
 import './env.js'
 import { createServer } from 'node:http'
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import { createDatabase, defaultDirectory } from './database.js'
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { createCommerce } from './commerce.js'
 import { createOpenGames, createOpenGamesSync } from './opengames.js'
 import { createCommunity } from './community.js'
+import { createProfiles } from './profile.js'
+import { passwordHash, matches, publicUser } from './passwords.js'
+import { createSessions } from './sessions.js'
+import { createAdminResources } from './admin-resources.js'
+import { createAutomations } from './automations.js'
+import { fetchExternalGames } from '../src/service/externalGamesService.js'
 
 const directory = process.env.AUTH_DATA_DIR || defaultDirectory
 const database = createDatabase(directory)
 const commerce = createCommerce(directory)
-const openGames = createOpenGames({ baseUrl: process.env.OPENGAMES_API_URL ?? process.env.VITE_API_URL, fallbackUrl: process.env.OPENGAMES_FALLBACK_URL })
+const openGames = createOpenGames({ baseUrl: process.env.OPENGAMES_API_URL ?? process.env.VITE_API_URL, fallbackUrl: process.env.OPENGAMES_FALLBACK_URL, fetcher: fetchExternalGames })
 const catalogSync = createOpenGamesSync(openGames, commerce)
 const community = createCommunity(directory, commerce)
-const sessions = new Map()
+const profiles = createProfiles(directory)
+const sessions = createSessions(database)
+const automations = createAutomations(database)
+const adminResources = createAdminResources(database, automations.enqueue)
 const attempts = new Map()
 const lifetime = 8 * 60 * 60 * 1000
-const publicUser = ({ id, name, email, role, createdAt }) => ({ id, name, email, role, createdAt })
-function passwordHash(password, salt = randomBytes(16).toString('hex')) {
-  return `${salt}:${scryptSync(password, salt, 64).toString('hex')}`
-}
-function matches(password, stored) {
-  return timingSafeEqual(Buffer.from(passwordHash(password, stored.split(':')[0])), Buffer.from(stored))
-}
-const users = database.read().users
+let users = database.read().users
 function save() {
   database.update(current => ({ ...current, users }))
 }
@@ -39,11 +41,11 @@ function reply(res, status, data) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
   res.end(JSON.stringify(data))
 }
-async function body(req) {
+async function body(req, maxBytes = 8192) {
   let raw = ''
   for await (const chunk of req) {
     raw += chunk
-    if (Buffer.byteLength(raw) > 8192) throw new Error('Solicitud demasiado grande.')
+    if (Buffer.byteLength(raw) > maxBytes) throw Object.assign(new Error('Solicitud demasiado grande.'), { status: 413 })
   }
   try { return JSON.parse(raw) } catch { throw new Error('Solicitud inválida.') }
 }
@@ -53,7 +55,8 @@ function setSession(res, user) {
   res.setHeader('Set-Cookie', `nexus_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${lifetime / 1000}${process.env.COOKIE_SECURE === 'true' ? '; Secure' : ''}`)
 }
 setInterval(() => {
-  for (const [key, value] of sessions) if (value.expires < Date.now()) sessions.delete(key)
+  sessions.prune()
+  void automations.flush()
   for (const [key, value] of attempts) if (value.expires < Date.now()) attempts.delete(key)
 }, 60000).unref()
 
@@ -61,11 +64,23 @@ export const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost')
     const path = url.pathname
-    if (req.method === 'POST' && req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return reply(res, 403, { error: 'Origen no permitido.' })
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) && req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return reply(res, 403, { error: 'Origen no permitido.' })
+    users = database.read().users
     const token = /(?:^|;\s*)nexus_session=([^;]+)/.exec(req.headers.cookie || '')?.[1]
     const session = sessions.get(token)
     const user = session?.expires > Date.now() ? users.find(item => item.id === session.userId) : null
     if (path.startsWith('/api/admin/') && user?.role !== 'admin') return reply(res, user ? 403 : 401, { error: 'Se requiere una sesión de administrador.' })
+    if (path.startsWith('/api/admin/resources/')) {
+      req.actor = user
+      req.url = req.url.slice('/api/admin/resources'.length)
+      return adminResources(req, res)
+    }
+    if (path === '/api/admin/automations' && req.method === 'GET') return reply(res, 200, automations.status())
+    if (path === '/api/admin/automations/retry' && req.method === 'POST') return reply(res, 200, await automations.retry())
+    if (path === '/api/profile' && ['GET', 'POST'].includes(req.method)) {
+      if (user?.role !== 'client') return reply(res, user ? 403 : 401, { error: 'Inicia sesión como cliente para ver tu perfil.' })
+      return reply(res, 200, req.method === 'GET' ? profiles.read(user.id) : profiles.update(user.id, await body(req, 1500000)))
+    }
     if (req.method === 'GET' && path === '/api/games') {
       void catalogSync.initialize()
       return reply(res, 200, { games: commerce.games(), catalog: catalogSync.state })
@@ -98,7 +113,9 @@ export const server = createServer(async (req, res) => {
     }
     if (req.method === 'POST' && path === '/api/orders') {
       if (user?.role !== 'client') return reply(res, user ? 403 : 401, { error: 'Inicia sesión como cliente para comprar.' })
-      return reply(res, 200, { order: commerce.purchase(user, await body(req)) })
+      const order = commerce.purchase(user, await body(req))
+      automations.enqueue('orders', order)
+      return reply(res, 200, { order })
     }
     if (req.method === 'GET' && path === '/api/auth/me') return reply(res, 200, { user: user ? publicUser(user) : null })
     if (req.method === 'POST' && path === '/api/auth/logout') {
@@ -119,6 +136,7 @@ export const server = createServer(async (req, res) => {
       const email = typeof data?.email === 'string' ? data.email.trim().toLowerCase() : ''
       const password = data?.password
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || typeof password !== 'string' || password.length > 128 || password.length < 8) return reply(res, 400, { error: 'Ingresa un correo válido y una contraseña de 8 a 128 caracteres.' })
+      users = database.read().users
       let account = users.find(item => item.email === email)
       if (path.endsWith('/register')) {
         const name = typeof data.name === 'string' ? data.name.trim() : ''
@@ -127,6 +145,7 @@ export const server = createServer(async (req, res) => {
         account = { id: randomUUID(), name, email, role: 'client', password: passwordHash(password), createdAt: new Date().toISOString() }
         users.push(account)
         try { save() } catch (error) { users.pop(); throw error }
+        automations.enqueue('users', account)
       } else {
         const validPassword = matches(password, account?.password || dummyHash)
         const role = path.endsWith('/admin-login') ? 'admin' : 'client'

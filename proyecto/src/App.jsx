@@ -3,10 +3,13 @@ import Navbar from './components/Navbar'
 import Store from './components/Store'
 import Routing from './routes/Routing'
 import { api } from './auth/api'
+import { useLanguage, t } from './language'
 import './css/auth.css'
 import './css/nexus.css'
+import './css/preferences.css'
 
 function App() {
+  useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -30,7 +33,7 @@ function App() {
   return (
     <>
       <Navbar onSearchChange={setSearchQuery} user={user} onLogout={logout} loading={loading} />
-      {authError && <p className="auth-error global-auth-error" role="alert">{authError}</p>}
+      {authError && <p className="auth-error global-auth-error" role="alert">{t(authError)}</p>}
       <Routing user={user} loading={loading} onAuthenticated={account => { setUser(account); setAuthError('') }}>
       <Store user={user} searchQuery={searchQuery} />
       </Routing>

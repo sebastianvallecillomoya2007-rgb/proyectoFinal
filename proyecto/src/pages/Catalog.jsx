@@ -1,3 +1,4 @@
+import { t } from '../language'
 import { useEffect, useState } from 'react';
 import { getGames } from '../service/gamesService';
 
@@ -14,7 +15,7 @@ export const GameList = () => {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <p>Cargando juegos...</p>;
+  if (loading) return <p>{t("Cargando juegos...")}</p>;
 
   return (
     <div className="game-grid">

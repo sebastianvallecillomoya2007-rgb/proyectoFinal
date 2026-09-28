@@ -1,7 +1,9 @@
+import { t } from '../language'
 import { useEffect, useState } from 'react'
 import GameCard from './GameCard'
 import '../css/principal.css'
 import { matchesCategory } from '../categories'
+import { getCatalogFromUrl } from '../service/gamesService'
 
 const homeSections = [
   { flag: 'isUpcoming', variant: 'upcoming', id: 'upcomingGrid', className: 'upcoming-grid', icon: 'fa-regular fa-clock', title: 'PRÓXIMOS LANZAMIENTOS', link: 'Ver Calendario' },
@@ -32,9 +34,7 @@ export default function Catalog({
       setError(null)
 
       try {
-        const response = await fetch(apiUrl, { signal: controller.signal })
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-        const data = await response.json()
+        const data = await getCatalogFromUrl(apiUrl, controller.signal)
         const list = Array.isArray(data) ? data : data?.games
         if (!Array.isArray(list)) throw new Error('La respuesta no contiene un arreglo de juegos')
         if (list.some(game => !game || typeof game.title !== 'string' || typeof game.category !== 'string' || typeof game.image !== 'string' || game.id == null)) {
@@ -76,7 +76,7 @@ export default function Catalog({
   }
 
   if (view === 'grid') {
-    return <><div className="games-grid" id="gamesGrid" aria-busy={loading}>{renderCards(filteredGames, 'standard')}</div>{!loading && filteredGames.length === 0 && <p className="auth-description">No hay juegos cargados que coincidan con estos filtros.</p>}</>
+    return <><div className="games-grid" id="gamesGrid" aria-busy={loading}>{t(renderCards(filteredGames, 'standard'))}</div>{!loading && filteredGames.length === 0 && <p className="auth-description">{t("No hay juegos cargados que coincidan con estos filtros.")}</p>}</>
   }
 
   return (
@@ -84,11 +84,11 @@ export default function Catalog({
       {homeSections.map(section => (
         <section className="home-section" key={section.id}>
           <div className="section-header">
-            <h2><i className={section.icon}></i>{' '}{section.title}</h2>
-            <a href="#all-games" className="see-more" onClick={event => { event.preventDefault(); document.getElementById('all-games')?.scrollIntoView({ behavior: 'smooth' }) }}>{section.link}</a>
+            <h2><i className={section.icon}></i>{t(' ')}{t(section.title)}</h2>
+            <a href="#all-games" className="see-more" onClick={event => { event.preventDefault(); document.getElementById('all-games')?.scrollIntoView({ behavior: 'smooth' }) }}>{t(section.link)}</a>
           </div>
           <div className={section.className} id={section.id} aria-busy={loading}>
-            {renderCards(filteredGames.filter(game => game[section.flag]).slice(0, 8), section.variant)}
+            {t(renderCards(filteredGames.filter(game => game[section.flag]).slice(0, 8), section.variant))}
           </div>
         </section>
       ))}

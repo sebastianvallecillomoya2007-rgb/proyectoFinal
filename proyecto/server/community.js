@@ -22,7 +22,7 @@ export function createCommunity(directory, commerce) {
       findGame(data?.gameId)
       if (typeof data.saved !== 'boolean') fail(400, 'Indica si deseas guardar el juego.')
       const wishlist = state.wishlist.filter(item => item.userId !== userId || item.gameId !== data.gameId)
-      if (data.saved) wishlist.push({ userId, gameId: data.gameId })
+      if (data.saved) wishlist.push({ id: state.wishlist.find(item => item.userId === userId && item.gameId === data.gameId)?.id || randomUUID(), userId, gameId: data.gameId })
       commit({ ...state, wishlist })
       return { saved: data.saved }
     },

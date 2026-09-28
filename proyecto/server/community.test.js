@@ -20,6 +20,8 @@ test('Deseados, reseñas, precios y persistencia por usuario', async () => {
   commerce.updatePrice(game.id, { basePrice: 15, isOffer: true, offerPrice: 10 })
   commerce.importOpenGames([{ ...game, description: 'Updated' }])
   assert.equal(commerce.games().find(item => item.id === game.id).price, 10)
+  process.env.N8N_REGISTRATION_URL = ''
+  process.env.N8N_PURCHASE_URL = ''
   const { server } = await import('./index.js')
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   const base = 'http://127.0.0.1:' + server.address().port + '/api'

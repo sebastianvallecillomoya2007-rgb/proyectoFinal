@@ -33,7 +33,7 @@ test('Migra las cinco colecciones sin modificar los archivos anteriores', t => {
   assert.equal(createDatabase(directory).read().users.length, 2)
 })
 
-test('Juegos, usuarios, ventas y comunidad comparten bd.json sin perder cambios', t => {
+test('Juegos, usuarios, ventas y comunidad comparten db.json sin perder cambios', t => {
   const directory = temporary(t)
   const database = createDatabase(directory)
   const commerce = createCommerce(directory)
@@ -46,7 +46,7 @@ test('Juegos, usuarios, ventas y comunidad comparten bd.json sin perder cambios'
   community.review(user, '1', { rating: 5, text: 'Una experiencia muy entretenida.' })
   const order = commerce.purchase(user, { gameId: '1', expectedPrice: 25, requestId: '11111111-1111-1111-1111-111111111111' })
   database.update(current => ({ ...current, users: [...current.users, { id: 'second' }] }))
-  const stored = JSON.parse(readFileSync(join(directory, 'bd.json'), 'utf8'))
+  const stored = JSON.parse(readFileSync(join(directory, 'db.json'), 'utf8'))
   assert.equal(stored.users.length, 2)
   assert.equal(stored.games.find(game => game.id === '1').price, 25)
   assert.ok(stored.games.some(game => game.id === 'opengames-example'))
@@ -58,16 +58,16 @@ test('Juegos, usuarios, ventas y comunidad comparten bd.json sin perder cambios'
   assert.equal(reloadedCommunity.wishlist(user.id).length, 1)
   assert.equal(reloadedCommunity.reviews('1', user.id)[0].rating, 5)
   assert.equal(reloadedCommerce.report().purchases, 1)
-  for (const name of ['users.json', 'commerce.json', 'community.json', 'bd.json.tmp']) assert.equal(existsSync(join(directory, name)), false)
+  for (const name of ['users.json', 'commerce.json', 'community.json', 'db.json.tmp']) assert.equal(existsSync(join(directory, name)), false)
 })
 
 test('Una base inválida no se reemplaza ni se reinicializa silenciosamente', t => {
   const directory = temporary(t)
-  const file = join(directory, 'bd.json')
+  const file = join(directory, 'db.json')
   writeFileSync(file, '{broken')
   assert.throws(() => createDatabase(directory))
   assert.equal(readFileSync(file, 'utf8'), '{broken')
   writeFileSync(file, JSON.stringify({ games: [] }))
-  assert.throws(() => createDatabase(directory), /bd.json/)
+  assert.throws(() => createDatabase(directory), /db.json/)
   assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { games: [] })
 })

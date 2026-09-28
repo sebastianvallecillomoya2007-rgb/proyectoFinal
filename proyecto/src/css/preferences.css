@@ -1,0 +1,96 @@
+/* === Ajustes y controles accesibles === */
+:root { color-scheme: dark; }
+.settings-trigger, .settings-heading button { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-glow); border-radius: 8px; padding: 10px 14px; cursor: pointer; font: inherit; }
+.settings-trigger { white-space: nowrap; }
+.settings-dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; margin: auto; padding: 24px; border: 1px solid var(--border-glow); border-radius: 14px; background: var(--bg-card); color: var(--text-main); }
+.settings-dialog::backdrop { background: #000b; }
+.settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.settings-heading h2 { font-size: 1.3rem; }
+.settings-heading button { font-size: 1.5rem; }
+.settings-dialog p, .settings-toggle small { color: var(--text-muted); line-height: 1.6; }
+.settings-fields { display: grid; gap: 20px; margin: 24px 0; }
+.settings-fields > label { display: grid; gap: 8px; }
+.settings-fields select { width: 100%; padding: 12px; font: inherit; background: var(--bg-main); color: var(--text-main); border: 1px solid var(--text-muted); border-radius: 6px; }
+.settings-fields fieldset { min-width: 0; padding: 16px; border: 1px solid var(--text-muted); border-radius: 8px; }
+.settings-fields legend { padding: 0 8px; font-weight: 700; }
+.settings-toggle { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; cursor: pointer; }
+.settings-toggle input { width: 22px; height: 22px; flex-shrink: 0; accent-color: var(--neon-cyan); }
+.settings-toggle strong, .settings-toggle small { display: block; }
+.settings-toggle small { margin-top: 4px; }
+.settings-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.skip-link { position: fixed; top: 8px; left: 8px; transform: translateY(-180%); padding: 12px; background: var(--bg-card); color: var(--text-main); z-index: 200; }
+.skip-link:focus { transform: translateY(0); }
+:focus-visible { outline: 3px solid var(--neon-cyan); outline-offset: 4px; }
+.requirements-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+
+/* === Distribución estable, incluso con texto ampliado === */
+.site-header { position: relative; flex-wrap: wrap; }
+.container { margin-left: 0; }
+.container > aside { position: sticky; top: 0; height: 100dvh; align-self: flex-start; flex-shrink: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; z-index: 10; }
+.container > main { overflow: visible; }
+body { overflow-x: clip; color: var(--text-main); }
+.store-home, .column, .slide-content { min-width: 0; }
+.hero-carousel { height: auto; min-height: 380px; }
+.carousel-track { min-height: 380px; }
+.slide { flex: 0 0 100%; min-width: 0; padding-bottom: 60px; }
+.games-grid, .deals-grid, .releases-grid, .upcoming-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); }
+.game-title { white-space: normal; overflow-wrap: anywhere; }
+.section-header { flex-wrap: wrap; gap: 12px; }
+@media (max-width: 800px) {
+  .container { flex-direction: column; }
+  .container > aside { position: static; width: 100%; height: auto; }
+  .split-section { grid-template-columns: minmax(0, 1fr); }
+  .settings-trigger { margin-left: auto; }
+}
+
+/* === Temas: los colores también se aplican a formularios y fichas === */
+:root[data-theme='light'] { color-scheme: light; --bg-main: #f9f9ff; --bg-sidebar: #f0f3ff; --bg-card: #ffffff; --text-main: #111c2d; --text-muted: #434655; --neon-cyan: #004ac6; --neon-pink: #003ea8; --border-glow: #737686; --store-line: #c3c6d7; }
+:root[data-contrast='true'] { --bg-main: #000; --bg-sidebar: #080808; --bg-card: #000; --text-main: #fff; --text-muted: #eee; --neon-cyan: #ffff00; --neon-pink: #8fefff; --border-glow: #fff; color-scheme: dark; }
+:root[data-theme='light'][data-contrast='true'] { --bg-main: #fff; --bg-sidebar: #fff; --bg-card: #fff; --text-main: #000; --text-muted: #111; --neon-cyan: #003b75; --neon-pink: #780028; --border-glow: #000; color-scheme: light; }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.site-header, .auth-page > .auth-card, .settings-dialog, .purchase-dialog, .price-editor, .review-form select, .review-form textarea, .auth-form input:not([type='checkbox']), .admin-search input, .admin-search select, .search-box input, .image-fallback) { background: var(--bg-card); color: var(--text-main); border-color: var(--border-glow); }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.game-description, .game-facts dd, .mini-title, .auth-form label, .admin-search, .player-review p, .auth-perks li) { color: var(--text-main); }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.auth-description, .auth-intro p, .auth-switch, .auth-secondary, .game-facts dt, .purchase-note, .review-score span, .game-breadcrumb, .detail-price small, .empty-reviews p, .review-meta time, .github-stars small, .mini-tag, .old-price, .rawg-attribution, .page-loading, .sales-stats h3, .sales-ranking small, .admin-stats h2, .admin-table caption, .account-details dt, .image-fallback small) { color: var(--text-muted); }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.btn-buy, .account-register) { background: var(--neon-cyan); color: var(--bg-main); }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.game-panel, .auth-card, .game-card, .player-review, .admin-table td, .admin-table th, .review-score, .game-facts > div, .category-title, .sidebar-footer) { border-color: var(--border-glow); }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.category-item:hover, .category-item.active) { color: var(--text-main); background: var(--bg-card); }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.catalog-notice, .auth-error, .commerce-success) { background: var(--bg-card); color: var(--text-main); border-color: var(--neon-pink); }
+:root:is([data-theme='light'], [data-contrast='true']) .slide-title { color: #7cf5ff; }
+:root:is([data-theme='light'], [data-contrast='true']) .slide-desc { color: #eee; }
+:root:is([data-theme='light'], [data-contrast='true']) .card-category-tag { color: #7cf5ff; }
+:root:is([data-theme='light'], [data-contrast='true']) :is(.logo, .slide-title, nav a) { text-shadow: none; }
+
+/* === Opciones independientes de accesibilidad === */
+html[data-reading='true'] body { letter-spacing: 0.04em; word-spacing: 0.08em; line-height: 1.8; }
+html[data-reading='true'] :is(p, li, dd, label, input, textarea) { line-height: 1.8; }
+html[data-links='true'] a { text-decoration: underline; text-underline-offset: 0.2em; }
+html[data-targets='true'] :is(button, select, input:not([type='checkbox']), a) { min-height: 44px; }
+html[data-targets='true'] a { display: inline-flex; align-items: center; padding: 6px; }
+html[data-targets='true'] .dot { min-width: 44px; }
+html[data-motion='true'] *, html[data-motion='true'] *::before, html[data-motion='true'] *::after { animation: none; transition: none; scroll-behavior: auto; }
+html[data-motion='true'] .game-card:hover { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .game-card:hover { transform: none; }
+}
+
+/* === Superficies y estados de Clarity & Calm === */
+:root[data-theme='light'] :is(.game-card, .auth-card, .hero-carousel) { box-shadow: 0 1px 3px #111c2d0d; border-color: var(--store-line); }
+:root[data-theme='light'] :is(.game-card:hover, .btn-buy:hover, .btn-redeem:hover) { box-shadow: 0 4px 12px #111c2d14; }
+:root[data-theme='light'] :is(.game-categories li, .mini-item) { background: var(--bg-sidebar); color: var(--text-muted); }
+:root[data-theme='light'] :is(.game-buy-button, .btn-icon-wishlist) { background: var(--bg-card); border-color: var(--neon-cyan); color: var(--neon-cyan); }
+:root[data-theme='light'] :is(.release-date, .launch-date, .price-preorder, .wishlist-remove, .account-name) { color: var(--text-main); }
+:root[data-theme='light'] .discount-tag { background: #006242; color: #fff; }
+:root[data-theme='light'] .badge-new { background: #d0e1fb; color: #111c2d; box-shadow: none; }
+:root[data-theme='light'] :is(.btn-buy, .account-register):hover { background: var(--neon-pink); color: var(--bg-card); }
+:root[data-theme='light'] input::placeholder { color: var(--text-muted); opacity: 1; }
+:root[data-theme='light'] .image-fallback > span { color: var(--neon-cyan); }
+:root[data-theme='light'] .slide-title { color: #eeefff; }
+:root[data-theme='light'] .slide .old-price { color: #ecf1ff; }
+:root[data-theme='light'] .category-item.active { background: var(--bg-card); color: var(--neon-cyan); font-weight: 700; }
+.settings-keyboard-help { margin-top: 12px; }
+.search-box input:focus-visible { outline: 3px solid var(--neon-cyan); outline-offset: 4px; }
+.category-item:focus-visible { outline-offset: -4px; }
+.carousel-dots { align-items: center; flex-wrap: wrap; left: 20px; justify-content: flex-end; }
+.carousel-dots .dot { min-width: 28px; min-height: 28px; border: 2px solid #fff; }
+.carousel-dots .dot.active { background: #fff; box-shadow: none; }
+.carousel-dots :focus-visible { outline-color: #fff; }
+html[data-motion='true'] :is(.game-card:hover, .release-card:hover) { transform: none; }

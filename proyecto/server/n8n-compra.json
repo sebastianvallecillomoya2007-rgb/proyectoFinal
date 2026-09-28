@@ -1,0 +1,82 @@
+{
+  "name": "NEXUS - Resumen de compra",
+  "active": false,
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Recibir evento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "nexus-compra",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexus-compra",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "process",
+      "name": "Procesar evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const event = $json.body;\nconst order = event?.order;\nif (event?.type !== 'order.created' || typeof order?.id !== 'string' || typeof order?.title !== 'string' || !Number.isSafeInteger(order?.totalCents) || order.totalCents < 0) {\n  return { json: { status: 400, error: 'Se requiere order.created con id, titulo y totalCents no negativo.' } };\n}\nreturn { json: { status: 200, event: 'receipt.ready', orderId: order.id,\n  title: order.title, amount: (order.totalCents / 100).toFixed(2), currency: 'USD',\n  simulated: true, message: 'Compra de prueba registrada. No se ha realizado ningun cobro.' } };"
+      }
+    },
+    {
+      "id": "reply",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.status }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Recibir evento": {
+      "main": [
+        [
+          {
+            "node": "Procesar evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar evento": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
