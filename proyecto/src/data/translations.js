@@ -1,6 +1,9 @@
+import { profileCatalogTranslations } from './profileCatalogTranslations.js'
+
 // Cada entrada contiene la traducción al inglés y al japonés. El español
 // conserva el texto original para mantener compatibilidad con la interfaz.
 export const translations = {
+  ...profileCatalogTranslations,
   'Idioma': ['Language', '言語'],
   '⚙ Ajustes': ['⚙ Settings', '⚙ 設定'],
   'Ajustes de la página': ['Page settings', 'ページ設定'],

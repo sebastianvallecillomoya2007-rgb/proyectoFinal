@@ -6,6 +6,7 @@ import { createServer } from 'vite'
 const directory = mkdtempSync(join(tmpdir(), 'nexus-e2e-'))
 process.env.AUTH_DATA_DIR = directory
 process.env.OPENGAMES_API_URL = ''
+process.env.FREETOGAME_API_URL = ''
 process.env.N8N_REGISTRATION_URL = ''
 process.env.N8N_PURCHASE_URL = ''
 process.env.ADMIN_EMAIL = 'admin@e2e.test'

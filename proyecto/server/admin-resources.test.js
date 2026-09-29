@@ -41,7 +41,7 @@ test('JSON Server: CRUD de cinco recursos, permisos y persistencia compartida', 
     const createdGame = await call(endpoint('games'), 'POST', gameData)
     assert.equal(createdGame.status, 201)
     const game = createdGame.data
-    assert.equal((await call(endpoint('games', game.id), 'PATCH', { basePrice: 12 })).data.price, 12)
+    assert.equal((await call(endpoint('games', game.id), 'PATCH', { basePrice: 12, image: 'https://example.com/game.jpg' })).data.price, 12)
     assert.equal((await call(endpoint('games', game.id), 'PATCH', { basePrice: -1 })).status, 400)
     assert.equal((await call(endpoint('games', game.id), 'DELETE', undefined, { Origin: 'https://other.test' })).status, 403)
     const refs = { userId: user.id, gameId: game.id }

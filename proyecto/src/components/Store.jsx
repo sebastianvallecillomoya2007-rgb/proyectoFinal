@@ -9,6 +9,7 @@ import Footer from './Footer'
 import PurchaseDialog from './PurchaseDialog'
 import { categoryLabel, gameCategories, matchesCategory } from '../categories'
 import { searchWithAI } from '../service/semanticService'
+import useFreeCatalog from '../service/useFreeCatalog'
 
 export default function Store({ user, searchQuery }) {
   const [games, setGames] = useState([])
@@ -18,10 +19,14 @@ export default function Store({ user, searchQuery }) {
   const [message, setMessage] = useState('')
   const [revision, setRevision] = useState(0)
   const [catalog, setCatalog] = useState(null)
+  const [freeStatus, setFreeStatus] = useState(null)
+  const [source, setSource] = useState('all')
   const [category, setCategory] = useState('all')
   const [platform, setPlatform] = useState('all')
   const [order, setOrder] = useState('featured')
   const [limit, setLimit] = useState(24)
+  const free = useFreeCatalog({ enabled: source === 'freetogame', category, platform, order, revision })
+  const sourceGames = source === 'freetogame' ? free.games : games
   useEffect(() => {
     let active = true
     let timer
@@ -33,8 +38,8 @@ export default function Store({ user, searchQuery }) {
       let interval = 30000
       try {
         const result = await getGames()
-        if (active) { setGames(result.games); setCatalog(result.catalog); setError(''); setLoading(false) }
-        if (result.catalog?.syncing) interval = 2500
+        if (active) { setGames(result.games); setCatalog(result.catalog); setFreeStatus(result.freeCatalog); setError(''); setLoading(false) }
+        if (result.catalog?.syncing || result.freeCatalog?.syncing) interval = 2500
       } catch (error) { if (active) { setError(error.message); setLoading(false) } }
       finally { pending = false }
       if (active) timer = setTimeout(load, interval)
@@ -43,11 +48,11 @@ export default function Store({ user, searchQuery }) {
     window.addEventListener('focus', load)
     return () => { active = false; clearTimeout(timer); window.removeEventListener('focus', load) }
   }, [revision])
-  const categories = [...new Set(games.flatMap(gameCategories))].sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b), 'es'))
-  const platforms = [...new Map(games.flatMap(game => game.platforms || []).map(item => [item.id, item])).values()].sort((a, b) => a.name.localeCompare(b.name))
+  const categories = [...new Set(source === 'freetogame' && free.categories.length ? free.categories : sourceGames.flatMap(gameCategories))].sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b), 'es'))
+  const platforms = source === 'freetogame' ? [{ id: 'windows', name: 'Windows' }, { id: 'browser', name: 'Navegador' }] : [...new Map(games.flatMap(game => game.platforms || []).map(item => [item.id, item])).values()].sort((a, b) => a.name.localeCompare(b.name))
   const query = searchQuery.toLowerCase().trim()
   const [ai, setAI] = useState(null)
-  const aiCatalog = JSON.stringify(games.filter(game => matchesCategory(game, category) && (platform === 'all' || game.platforms?.some(item => String(item.id) === platform))).map(({ id, title, description, categories }) => ({ id, title, description, categories })))
+  const aiCatalog = JSON.stringify(sourceGames.filter(game => (source === 'freetogame' || matchesCategory(game, category)) && (platform === 'all' || game.platforms?.some(item => String(item.id) === platform))).map(({ id, title, description, categories }) => ({ id, title, description, categories })))
   useEffect(() => {
     if (order !== 'ai' || !query || aiCatalog === '[]') return
     let cancel
@@ -60,12 +65,13 @@ export default function Store({ user, searchQuery }) {
   const currentAI = order === 'ai' && ai?.query === query && ai?.catalog === aiCatalog ? ai : null
   const aiIds = currentAI?.results?.map(item => item.id)
   const aiMessage = order !== 'ai' ? '' : !query ? 'Escribe lo que te gustaría jugar en el buscador para usar la IA.' : currentAI?.error || currentAI?.status || 'Preparando búsqueda con IA…'
-  const visible = games.filter(game => matchesCategory(game, category) && (platform === 'all' || game.platforms?.some(item => String(item.id) === platform)) && (aiIds ? aiIds.includes(game.id) : (game.title + ' ' + (game.description || '')).toLowerCase().includes(query)))
+  const visible = sourceGames.filter(game => (source === 'freetogame' || matchesCategory(game, category)) && (platform === 'all' || game.platforms?.some(item => String(item.id) === platform)) && (aiIds ? aiIds.includes(game.id) : (game.title + ' ' + (game.description || '')).toLowerCase().includes(query)))
   if (order === 'ai' && aiIds) visible.sort((a, b) => aiIds.indexOf(a.id) - aiIds.indexOf(b.id))
   if (order === 'title') visible.sort((a, b) => a.title.localeCompare(b.title))
   if (order === 'stars') visible.sort((a, b) => (b.stars || 0) - (a.stars || 0))
   if (order === 'price') visible.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))
-  const filtered = category !== 'all' || platform !== 'all' || Boolean(query)
+  if (order === 'release-date') visible.sort((a, b) => (b.released || '').localeCompare(a.released || ''))
+  const filtered = source !== 'all' || category !== 'all' || platform !== 'all' || Boolean(query)
   function buy(game) {
     if (!user) { window.location.hash = '/login?next=' + encodeURIComponent('/juego/' + game.id); return }
     if (user.role !== 'client') { setMessage('Inicia sesión con una cuenta de cliente para realizar compras.'); return }
@@ -77,22 +83,28 @@ export default function Store({ user, searchQuery }) {
       {message && <p className="commerce-success" role="status">{t(message)}</p>}
       {error && <p className="auth-error" role="alert">{t(error)}</p>}
       {catalog?.error && <p className="catalog-notice" role="status">{t(catalog.error)}</p>}
+      {source === 'all' && freeStatus?.error && <p className="catalog-notice" role="status">{t(freeStatus.error)}</p>}
+      {source === 'all' && freeStatus?.syncing && <p className="catalog-notice" role="status">{t('Actualizando los juegos gratuitos de FreeToGame…')}</p>}
       {catalog?.syncing && <p className="catalog-notice" role="status">{t("Ampliando el catálogo de OpenGames… ")}{t(catalog.imported)}{catalog.total != null && t(' de ' + catalog.total)}{t(" juegos importados. Puedes seguir explorando.")}</p>}
       {loading ? <p role="status">{t("Cargando tienda…")}</p> : <>
         {!filtered && <><HeroSection games={games} onBuy={buy} /><Catalog games={games} onAddToCart={buy} /></>}
         <section className="home-section" id="all-games">
           <div className="section-header"><h2>{category === 'all' ? t('Todos los juegos') : t(categoryLabel(category))}</h2><button className="btn-redeem" onClick={() => setRevision(value => value + 1)}>{t("Actualizar tienda")}</button></div>
           <div className="catalog-toolbar">
+            <label className="admin-search" htmlFor="catalog-source">{t('Catálogo')}<select id="catalog-source" value={source} onChange={event => { setSource(event.target.value); setCategory('all'); setPlatform('all'); setOrder('featured'); setLimit(24) }}><option value="all">{t('Todos los juegos')}</option><option value="freetogame">{t('Juegos gratuitos · FreeToGame')}</option></select></label>
             <label className="admin-search" htmlFor="catalog-platform">{t("Plataforma")}<select id="catalog-platform" value={platform} onChange={event => { setPlatform(event.target.value); setLimit(24) }}><option value="all">{t("Todas las plataformas")}</option>{platforms.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-            <label className="admin-search" htmlFor="catalog-order">{t("Ordenar por")}<select id="catalog-order" value={order} onChange={event => { setOrder(event.target.value); setLimit(24) }}><option value="featured">{t("Destacados")}</option><option value="title">{t("Nombre A–Z")}</option><option value="stars">{t("Estrellas en GitHub")}</option><option value="price">{t("Menor precio")}</option><option value="ai">{t("Afinidad con tu búsqueda (IA)")}</option></select></label>
+            <label className="admin-search" htmlFor="catalog-order">{t("Ordenar por")}<select id="catalog-order" value={order} onChange={event => { setOrder(event.target.value); setLimit(24) }}><option value="featured">{source === 'freetogame' ? t('Relevancia') : t("Destacados")}</option><option value="title">{t("Nombre A–Z")}</option><option value="release-date">{t('Fecha de lanzamiento')}</option>{source === 'freetogame' ? <option value="popularity">{t('Popularidad')}</option> : <option value="stars">{t("Estrellas en GitHub")}</option>}<option value="price">{t("Menor precio")}</option><option value="ai">{t("Afinidad con tu búsqueda (IA)")}</option></select></label>
             <p className="auth-description" role="status">{t(visible.length)}{t(" resultados · ")}{t(games.length)}{t(" juegos en el catálogo")}{aiMessage && <><br />{t(aiMessage)}</>}</p>
           </div>
-          <Catalog games={visible.slice(0, limit)} view="grid" onAddToCart={buy} />
+          {source === 'freetogame' && <p className="catalog-notice">{t('Juegos gratuitos para PC y navegador. Precio de acceso: Gratis; pueden incluir compras opcionales dentro del juego.')} <a href="https://www.freetogame.com" target="_blank" rel="noreferrer">FreeToGame ↗</a></p>}
+          {source === 'freetogame' && free.notice && <p className="catalog-notice" role="status">{t(free.notice)}</p>}
+          {free.loading ? <p className="page-loading" role="status">{t('Cargando juegos de FreeToGame…')}</p> : <Catalog games={visible.slice(0, limit)} view="grid" onAddToCart={buy} />}
           {visible.length > limit && <button className="btn-buy catalog-load-more" onClick={() => setLimit(value => value + 24)}>{t("Mostrar más juegos (")}{t(visible.length - limit)}{t(" restantes)")}</button>}
           {!visible.length && catalog?.syncing && <p className="auth-description">{t("La búsqueda se ampliará a medida que se complete la importación.")}</p>}
         </section>
         {!filtered && <FeaturedLists games={games} onBuy={buy} />}
         <p className="catalog-attribution">{t("Catálogo ampliado con ")}<a href="https://www.open-source-games.com" target="_blank" rel="noreferrer">{t("OpenGames")}</a>{t(". Los precios disponibles corresponden a la tienda.")}</p>
+        <p className="catalog-attribution">{t('Juegos gratuitos e imágenes proporcionados por ')}<a href="https://www.freetogame.com" target="_blank" rel="noreferrer">FreeToGame</a>.</p>
       </>}
       {selected && <PurchaseDialog key={selected.id} game={selected} onClose={() => setSelected(null)} onPurchased={order => { setSelected(null); setMessage('Compra de prueba registrada: ' + order.title + ' · $' + (order.totalCents / 100).toFixed(2) + ' USD.') }} />}
     </main>

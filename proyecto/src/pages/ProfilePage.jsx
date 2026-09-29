@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../auth/api'
 import GameImage from '../components/GameImage'
 import ProfileImageEditor from '../components/ProfileImageEditor'
+import ProfilePhotoMenu from '../components/ProfilePhotoMenu'
 import { prepareProfileImage } from '../service/profileImage'
 import '../css/profile.css'
 
@@ -24,6 +25,8 @@ export default function ProfilePage({ user }) {
   const photoInput = useRef(null)
   const bannerInput = useRef(null)
   const [editor, setEditor] = useState(null)
+  const [photoMenu, setPhotoMenu] = useState(null)
+  const photoTrigger = useRef(null)
   useEffect(() => {
     let active = true
     api('/profile').then(result => { if (active) { setProfile(result); setError('') } }).catch(error => { if (active) setError(error.message) })
@@ -43,12 +46,24 @@ export default function ProfilePage({ user }) {
     setBusy(true); setError(''); setNotice('')
     try {
       const source = await prepareProfileImage(file)
+      setPhotoMenu(null)
       setEditor({ target, source })
     } catch (error) { setError(error.message || 'No se pudo abrir la foto.') }
     finally { setBusy(false) }
   }
   function editImage(target) {
+    setPhotoMenu(null)
     setEditor({ target, source: profile.imageEdits?.[target]?.source || profile[target], settings: profile.imageEdits?.[target]?.settings })
+  }
+  function openPhotoMenu(target, event) {
+    photoTrigger.current = event.currentTarget
+    setError('')
+    setPhotoMenu(target)
+  }
+  function closePhotoDialogs() {
+    setPhotoMenu(null)
+    setEditor(null)
+    photoTrigger.current?.focus()
   }
   const games = profile?.games || []
   const purchased = games.filter(game => game.purchased).length
@@ -61,20 +76,20 @@ export default function ProfilePage({ user }) {
     <a href="#/" className="profile-back">{t("← Volver a la tienda")}</a>
     {error && <p className="auth-error" role="alert">{t(error)} {!profile && <button className="btn-redeem" onClick={() => setRevision(value => value + 1)}>{t("Reintentar")}</button>}</p>}
     <p className="profile-notice" role="status">{t(notice)}</p>
-    {!profile ? !error && <p role="status">{t("Cargando tu perfil…")}</p> : <>
+    {!profile ? !error && <p role="status">{t("Cargando tu perfil…")}</p> : <div className="profile-layout"><div className="profile-main-column">
       <section className="profile-hero" aria-labelledby="profile-name">
         <div className={`profile-banner${profile.banner ? ' has-custom-banner' : ''}`}>
           {profile.banner ? <img className="profile-banner-image" src={profile.banner} alt={t("Banner de tu perfil")} /> : <><span aria-hidden="true">{t("NEXUS / PLAYER HUB")}</span><div className="profile-banner-orbit" aria-hidden="true" /></>}
+          <button type="button" className="profile-banner-edit" disabled={busy} onClick={event => openPhotoMenu('banner', event)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M8 5 9.5 3h5L16 5h4v15H4V5Z" /><circle cx="12" cy="12" r="4" /></svg>{t('Cambiar banner')}</button>
         </div>
-        <div className="profile-banner-actions"><button type="button" className="profile-text-button" disabled={busy} onClick={() => bannerInput.current.click()}>{t("Cambiar banner")}</button>{profile.banner && <><button type="button" className="profile-text-button" disabled={busy} onClick={() => editImage('banner')}>{t("Ajustar banner")}</button><button type="button" className="profile-text-button" disabled={busy} onClick={() => update({ action: 'banner', banner: '' }, 'Banner eliminado.')}>{t("Quitar banner")}</button></>}<input ref={bannerInput} type="file" accept="image/png,image/jpeg,image/webp" aria-label={t("Elegir banner de perfil")} hidden onChange={event => changePhoto(event, 'banner')} /></div>
+        <input ref={bannerInput} type="file" accept="image/png,image/jpeg,image/webp" aria-label={t("Elegir banner de perfil")} hidden onChange={event => changePhoto(event, 'banner')} />
         <div className="profile-identity">
-          <Avatar name={user.name} src={profile.avatar} />
+          <button className="profile-avatar-edit" type="button" disabled={busy} aria-label={t('Cambiar foto de perfil')} onClick={event => openPhotoMenu('avatar', event)}><Avatar name={user.name} src={profile.avatar} /><span className="profile-avatar-camera" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 5 9.5 3h5L16 5h4v15H4V5Z" /><circle cx="12" cy="12" r="4" /></svg></span></button>
           <div className="profile-identity-copy"><span className="profile-eyebrow">{t("TU ESPACIO DE JUEGO")}</span><h1 id="profile-name">{user.name}</h1><p>{user.email}</p><span className="profile-member">{t("Cliente Nexus · Desde ")}{t(new Date(user.createdAt).toLocaleDateString(getLocale(), { month: 'long', year: 'numeric' }))}</span></div>
-          <div className="profile-photo-actions"><button className="btn-buy" disabled={busy} onClick={() => photoInput.current.click()}>{t("Cambiar foto")}</button>{profile.avatar && <><button className="profile-text-button" disabled={busy} onClick={() => editImage('avatar')}>{t("Ajustar foto")}</button><button className="profile-text-button" disabled={busy} onClick={() => update({ action: 'avatar', avatar: '' }, 'Foto eliminada.')}>{t("Quitar foto")}</button></>}<small>{t("PNG, JPEG o WebP · Hasta 5 MB")}</small><input ref={photoInput} type="file" accept="image/png,image/jpeg,image/webp" aria-label={t("Elegir foto de perfil")} hidden onChange={event => changePhoto(event, 'avatar')} /></div>
+          <div className="profile-photo-actions"><button className="profile-secondary-button" disabled={busy} onClick={event => openPhotoMenu('avatar', event)}>{t('Editar foto de perfil')}</button><small>{t('Dale tu estilo a tu perfil')}</small><input ref={photoInput} type="file" accept="image/png,image/jpeg,image/webp" aria-label={t("Elegir foto de perfil")} hidden onChange={event => changePhoto(event, 'avatar')} /></div>
         </div>
         <dl className="profile-stats"><div><dt>{t("Juegos comprados")}</dt><dd>{t(purchased)}</dd></div><div><dt>{t("Guardados / deseados")}</dt><dd>{t(saved)}</dd></div><div><dt>{t("Horas registradas")}</dt><dd>{t(formatHours(totalHours))} <small>{t("h")}</small></dd></div><div><dt>{t("Amigos guardados")}</dt><dd>{t(profile.friends.length)}</dd></div></dl>
       </section>
-      <div className="profile-columns">
         <section className="profile-library" aria-labelledby="library-title">
           <div className="profile-section-heading"><div><span className="profile-eyebrow">{t("TUS PRÓXIMAS AVENTURAS")}</span><h2 id="library-title">{t("Biblioteca de juegos")}</h2></div><span>{t(games.length)}{t(" juegos")}</span></div>
           <div className="profile-toolbar">
@@ -94,17 +109,19 @@ export default function ProfilePage({ user }) {
             </div>
           </article>)}</div> : <div className="profile-empty"><span aria-hidden="true">{t("◇")}</span><h3>{games.length ? t('No hay coincidencias') : t('Tu biblioteca empieza aquí')}</h3><p>{games.length ? t('Prueba otro nombre o cambia el filtro.') : t('Los juegos que compres o añadas a deseados aparecerán en este espacio.')}</p><a className="btn-buy" href="#/">{t("Explorar juegos")}</a></div>}
         </section>
-        <section className="profile-friends" aria-labelledby="friends-title">
-          <div className="profile-section-heading"><h2 id="friends-title">{t("Tus amigos")}</h2><span>{t(profile.friends.length)}</span></div>
+      </div>
+        <aside className="profile-friends" aria-labelledby="friends-title">
+          <div className="profile-section-heading"><div><span className="profile-eyebrow">{t('TU COMUNIDAD')}</span><h2 id="friends-title">{t("Tus amigos")}</h2></div><span className="profile-friends-count">{t(profile.friends.length)}</span></div>
           <p className="profile-help">{t("Guarda a otros jugadores en tu lista personal.")}</p>
           <label className="profile-code" htmlFor="friend-code">{t("Tu código de cliente")}<input id="friend-code" readOnly value={user.id} onFocus={event => event.target.select()} /><small>{t("Compártelo para que puedan añadirte.")}</small></label>
           <form className="profile-add-friend" onSubmit={async event => { event.preventDefault(); const form = event.currentTarget; const friendId = new FormData(form).get('friendId').trim(); if (await update({ action: 'add-friend', friendId }, 'Amigo añadido a tu lista.')) form.reset() }}><label htmlFor="add-friend-code">{t("Añadir por código")}<input id="add-friend-code" name="friendId" required maxLength={80} placeholder={t("Código de tu amigo")} /></label><button className="btn-buy" disabled={busy}>{t("Añadir amigo")}</button></form>
           <label className="profile-friend-search" htmlFor="friend-search">{t("Buscar amigos")}<input id="friend-search" type="search" placeholder={t("Nombre de tu amigo…")} value={friendSearch} onChange={event => setFriendSearch(event.target.value)} /></label>
           <ul className="profile-friend-list">{friends.map(friend => <li key={friend.id}><Avatar name={friend.name} src={friend.avatar} /><div><strong>{friend.name}</strong><small>{t("Jugador Nexus")}</small></div><button className="profile-text-button" disabled={busy} aria-label={t(`Quitar a ${friend.name} de amigos`)} onClick={() => update({ action: 'remove-friend', friendId: friend.id }, 'Amigo quitado de tu lista.')}>{t("Quitar")}</button></li>)}</ul>
           {!friends.length && <p className="profile-help">{profile.friends.length ? t('No hay amigos con ese nombre.') : t('Aún no tienes amigos guardados. Añade el código de un cliente para empezar.')}</p>}
-        </section>
+        </aside>
       </div>
-    </>}
-    {editor && <ProfileImageEditor {...editor} onClose={() => setEditor(null)} onSaved={result => { setProfile(result); setNotice(editor.target === 'banner' ? 'Banner actualizado.' : 'Foto de perfil actualizada.'); setEditor(null) }} />}
+    }
+    {photoMenu && <ProfilePhotoMenu target={photoMenu} image={profile[photoMenu]} name={user.name} busy={busy} error={error} onUpload={() => (photoMenu === 'banner' ? bannerInput : photoInput).current.click()} onEdit={() => editImage(photoMenu)} onRemove={async () => { if (await update({ action: photoMenu, [photoMenu]: '' }, photoMenu === 'banner' ? 'Banner eliminado.' : 'Foto eliminada.')) closePhotoDialogs() }} onClose={closePhotoDialogs} />}
+    {editor && <ProfileImageEditor {...editor} onClose={closePhotoDialogs} onSaved={result => { setProfile(result); setNotice(editor.target === 'banner' ? 'Banner actualizado.' : 'Foto de perfil actualizada.'); closePhotoDialogs() }} />}
   </main>
 }

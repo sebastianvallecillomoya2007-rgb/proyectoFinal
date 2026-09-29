@@ -2,6 +2,7 @@ import { t } from '../language'
 import { useEffect, useState } from 'react'
 import '../css/principal.css'
 import Settings from './Settings'
+import BrandLogo from './BrandLogo'
 
 export default function Navbar({ onSearchChange, user, onLogout, loading }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -19,7 +20,7 @@ export default function Navbar({ onSearchChange, user, onLogout, loading }) {
   }
   return <header className="site-header">
     <a className="skip-link" href="#main-content" onClick={event => { event.preventDefault(); const main = document.querySelector('main'); if (main) { main.tabIndex = -1; main.focus(); main.scrollIntoView() } }}>{t("Saltar al contenido")}</a>
-    <a className="logo" href="#/" aria-label={t("NEXUS GAMES, inicio")}>{t("NEXUS GAMES")}</a>
+    <a className="logo" href="#/" aria-label={t("NEXUS GAMES, inicio")}><BrandLogo name={t('NEXUS GAMES')} /></a>
     <nav className="main-navigation" aria-label={t("Navegación principal")}>
       <a className={!path || path === '#/' ? 'active' : ''} href="#/">{t("Tienda")}</a>
       <a className={path === '#/deseados' ? 'active' : ''} href="#/deseados">{t("Deseados")}</a>

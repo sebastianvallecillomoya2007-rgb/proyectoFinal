@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Dark Radial Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#ff0055" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#0a0a0e" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Cyan Neon Gradient -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7df9ff"/>
+      <stop offset="50%" stop-color="#00f0ff"/>
+      <stop offset="100%" stop-color="#0080ff"/>
+    </linearGradient>
+
+    <!-- Magenta Accent Gradient -->
+    <linearGradient id="magentaGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff0055"/>
+      <stop offset="70%" stop-color="#ff00a0"/>
+      <stop offset="100%" stop-color="#ff55c5"/>
+    </linearGradient>
+
+    <!-- Core Dark Metal Fill -->
+    <linearGradient id="plateGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24"/>
+      <stop offset="100%" stop-color="#121216"/>
+    </linearGradient>
+
+    <!-- Glow Filters -->
+    <filter id="neonCyanGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur1"/>
+      <feGaussianBlur stdDeviation="14" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="neonMagentaGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur1"/>
+      <feGaussianBlur stdDeviation="12" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    .cyber-circuit { stroke: #00f0ff; stroke-opacity: 0.35; stroke-dasharray: 4, 4; fill: none; }
+    .brand-text { font-family: 'Sora', 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 900; letter-spacing: 0.22em; text-anchor: middle; }
+    .sub-text { font-family: 'Sora', 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 700; letter-spacing: 0.35em; text-anchor: middle; }
+  </style>
+
+  <!-- Ambient Glow -->
+  <circle cx="256" cy="220" r="230" fill="url(#bgGlow)"/>
+
+  <!-- Background Cyber Circuit Grid Lines -->
+  <circle cx="256" cy="210" r="175" stroke="#2a2a35" stroke-width="1.5" fill="none" stroke-dasharray="6, 8"/>
+  <circle cx="256" cy="210" r="145" stroke="#00f0ff" stroke-width="1" fill="none" stroke-opacity="0.2"/>
+
+  <!-- Orbital Cyber Nodes -->
+  <circle cx="256" cy="35" r="3.5" fill="#00f0ff" filter="url(#neonCyanGlow)"/>
+  <circle cx="431" cy="210" r="3.5" fill="#00f0ff" filter="url(#neonCyanGlow)"/>
+  <circle cx="81" cy="210" r="3.5" fill="#00f0ff" filter="url(#neonCyanGlow)"/>
+  <circle cx="256" cy="385" r="3" fill="#ff0055" filter="url(#neonMagentaGlow)"/>
+
+  <!-- Outer Hexagonal Shroud / Crest (Geometric Angular Wings) -->
+  <!-- Left Wing Grip (Gamepad Horn + Tech Shard) -->
+  <path d="M 125,130 
+           L 190,95 
+           L 220,110 
+           L 180,180 
+           L 140,290 
+           L 100,270 
+           L 95,210 
+           Z" 
+        fill="url(#plateGrad)" stroke="#2f2f3d" stroke-width="2"/>
+
+  <!-- Right Wing Grip -->
+  <path d="M 387,130 
+           L 322,95 
+           L 292,110 
+           L 332,180 
+           L 372,290 
+           L 412,270 
+           L 417,210 
+           Z" 
+        fill="url(#plateGrad)" stroke="#2f2f3d" stroke-width="2"/>
+
+  <!-- Outer Cyan Edge Light Strips (Left & Right) -->
+  <path d="M 118,140 L 92,210 L 98,272 L 138,294" fill="none" stroke="url(#cyanGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonCyanGlow)"/>
+  <path d="M 394,140 L 420,210 L 414,272 L 374,294" fill="none" stroke="url(#cyanGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonCyanGlow)"/>
+
+  <!-- Top Controller Crown Frame -->
+  <polygon points="210,95 256,70 302,95 285,120 227,120" fill="url(#plateGrad)" stroke="#00f0ff" stroke-width="2" stroke-opacity="0.8"/>
+
+  <!-- Central Nexus Core Shield (Angular Hexagon) -->
+  <polygon points="256,120 330,165 330,255 256,300 182,255 182,165" 
+           fill="#0d0d12" stroke="#252530" stroke-width="3"/>
+
+  <!-- Core Faceted Gem Glow (Magenta / Cyan Energy Conduit) -->
+  <polygon points="256,134 316,172 316,248 256,286 196,248 196,172" 
+           fill="#15151e" stroke="url(#magentaGrad)" stroke-width="2" filter="url(#neonMagentaGlow)"/>
+
+  <!-- The "N" Cyber Monogram / D-Pad + Action Nodes -->
+  <!-- Left Pillar of N (Gamepad D-pad cross bar styled) -->
+  <path d="M 218,172 L 234,172 L 234,248 L 218,248 Z" fill="url(#cyanGrad)" filter="url(#neonCyanGlow)"/>
+  <!-- Diagonal Beam of N (Quantum Energy Slit) -->
+  <path d="M 230,174 L 282,246 L 266,246 L 218,178 Z" fill="#ffffff" opacity="0.95"/>
+  <!-- Right Pillar of N -->
+  <path d="M 278,172 L 294,172 L 294,248 L 278,248 Z" fill="url(#cyanGrad)" filter="url(#neonCyanGlow)"/>
+
+  <!-- Precision Crosshair & Gamepad Tactile Nodes -->
+  <!-- Action Diamonds (Right cluster hint) -->
+  <circle cx="360" cy="180" r="4.5" fill="#ff0055" filter="url(#neonMagentaGlow)"/>
+  <circle cx="380" cy="200" r="4.5" fill="#00f0ff" filter="url(#neonCyanGlow)"/>
+  <circle cx="360" cy="220" r="4.5" fill="#00f0ff" filter="url(#neonCyanGlow)"/>
+  <circle cx="340" cy="200" r="4.5" fill="#ffffff"/>
+
+  <!-- D-Pad Directional Arrows (Left cluster hint) -->
+  <path d="M 152,192 L 152,182 L 158,182 L 158,192 L 168,192 L 168,198 L 158,198 L 158,208 L 152,208 L 152,198 L 142,198 L 142,192 Z" 
+        fill="#00f0ff" opacity="0.85" filter="url(#neonCyanGlow)"/>
+
+  <!-- Center Quantum Singularity Eye -->
+  <circle cx="256" cy="210" r="5" fill="#ffffff" filter="url(#neonCyanGlow)"/>
+  <circle cx="256" cy="210" r="11" stroke="#00f0ff" stroke-width="1.5" fill="none" opacity="0.8"/>
+
+  <!-- Subtle Cyber Tech Text Below Emblem -->
+  <g transform="translate(256, 442)">
+    <text y="0" class="brand-text" fill="#ffffff" font-size="34">NEXUS</text>
+    <text y="32" class="sub-text" fill="#00f0ff" font-size="14" filter="url(#neonCyanGlow)">G A M E S</text>
+    <!-- Accent Underline Lines -->
+    <line x1="-120" y1="42" x2="120" y2="42" stroke="url(#cyanGrad)" stroke-width="1.5"/>
+    <polygon points="0,39 6,42 0,45 -6,42" fill="#ff0055" filter="url(#neonMagentaGlow)"/>
+  </g>
+</svg>

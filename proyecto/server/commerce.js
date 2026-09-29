@@ -1,5 +1,6 @@
 import { createDatabase } from './database.js'
 import { randomUUID } from 'node:crypto'
+import { keepCatalogGame } from './catalog-policy.js'
 
 function fail(status, message) {
   throw Object.assign(new Error(message), { status })
@@ -15,14 +16,27 @@ export function createCommerce(directory) {
   const database = createDatabase(directory)
   const commit = next => database.update(current => ({ ...current, games: next.games, orders: next.orders }))
   return {
-    games: () => database.read().games.map(game => ({ ...game, categories: game.categories?.length ? game.categories : [game.category || 'uncategorized'] })),
+    games: () => database.read().games.filter(keepCatalogGame).map(game => ({ ...game, categories: game.categories?.length ? game.categories : [game.category || 'uncategorized'] })),
+    importFreeGames(incoming) {
+      const state = database.read()
+      const games = [...state.games]
+      for (const metadata of incoming) {
+        const index = games.findIndex(game => game.id === metadata.id)
+        const previous = index >= 0 ? games[index] : {}
+        const game = { ...previous, ...metadata, description: metadata.fullDescription || previous.fullDescription || metadata.description, price: 0, basePrice: 0, oldPrice: null, isOffer: false, discount: null }
+        if (index >= 0) games[index] = game
+        else games.push(game)
+      }
+      if (JSON.stringify(games) !== JSON.stringify(state.games)) commit({ ...state, games })
+    },
     importOpenGames(incoming) {
       const state = database.read()
       const games = [...state.games]
       for (const metadata of incoming) {
         const index = games.findIndex(game => game.id === metadata.id)
+        if (!keepCatalogGame({ ...(index >= 0 ? games[index] : {}), ...metadata })) continue
         if (index >= 0) games[index] = { ...games[index], ...metadata }
-        else games.push({ ...metadata, price: null, basePrice: null, isOffer: false, oldPrice: null, discount: null })
+        else games.push({ price: null, basePrice: null, isOffer: false, oldPrice: null, discount: null, ...metadata })
       }
       if (JSON.stringify(games) !== JSON.stringify(state.games)) commit({ ...state, games })
     },
@@ -31,12 +45,14 @@ export function createCommerce(directory) {
       const games = [...state.games]
       const canonical = title => title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '')
       for (const metadata of incoming) {
+        if (!metadata.image?.trim() && metadata.price !== 0 && metadata.isFreeToPlay !== true) continue
         const index = games.findIndex(game => game.rawgId === metadata.rawgId || (!game.rawgId && canonical(game.title) === canonical(metadata.title)))
+        if (!keepCatalogGame({ ...(index >= 0 ? games[index] : { id: `rawg-${metadata.rawgId}` }), ...metadata })) continue
         if (index >= 0) {
           // Los metadatos de RAWG no modifican IDs locales, precios, ofertas ni ventas.
           games[index] = { ...games[index], ...metadata, category: metadata.categories[0] }
         } else {
-          games.push({ ...metadata, id: `rawg-${metadata.rawgId}`, category: metadata.categories[0], price: null, basePrice: null, isOffer: false, oldPrice: null, discount: null })
+          games.push({ price: null, basePrice: null, isOffer: false, oldPrice: null, discount: null, ...metadata, id: `rawg-${metadata.rawgId}`, category: metadata.categories[0] })
         }
       }
       if (JSON.stringify(games) !== JSON.stringify(state.games)) commit({ ...state, games })

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Store from './components/Store'
 import Routing from './routes/Routing'
@@ -9,6 +10,7 @@ import './css/nexus.css'
 import './css/preferences.css'
 
 function App() {
+  const isAdmin = /^\/admin(?:\/|$)/.test(useLocation().pathname)
   useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
   const [user, setUser] = useState(null)
@@ -32,8 +34,8 @@ function App() {
 
   return (
     <>
-      <Navbar onSearchChange={setSearchQuery} user={user} onLogout={logout} loading={loading} />
-      {authError && <p className="auth-error global-auth-error" role="alert">{t(authError)}</p>}
+      {!isAdmin && <Navbar onSearchChange={setSearchQuery} user={user} onLogout={logout} loading={loading} />}
+      {!isAdmin && authError && <p className="auth-error global-auth-error" role="alert">{t(authError)}</p>}
       <Routing user={user} loading={loading} onAuthenticated={account => { setUser(account); setAuthError('') }}>
       <Store user={user} searchQuery={searchQuery} />
       </Routing>

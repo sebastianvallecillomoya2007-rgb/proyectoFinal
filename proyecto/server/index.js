@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { createCommerce } from './commerce.js'
 import { createOpenGames, createOpenGamesSync } from './opengames.js'
+import { createFreeToGame, createFreeToGameCatalog } from './freetogame.js'
 import { createCommunity } from './community.js'
 import { createProfiles } from './profile.js'
 import { passwordHash, matches, publicUser } from './passwords.js'
@@ -19,6 +20,8 @@ const database = createDatabase(directory)
 const commerce = createCommerce(directory)
 const openGames = createOpenGames({ baseUrl: process.env.OPENGAMES_API_URL ?? process.env.VITE_API_URL, fallbackUrl: process.env.OPENGAMES_FALLBACK_URL, fetcher: fetchExternalGames })
 const catalogSync = createOpenGamesSync(openGames, commerce)
+const freeToGame = createFreeToGame({ baseUrl: process.env.FREETOGAME_API_URL ?? (process.env.NODE_TEST_CONTEXT ? '' : undefined), fetcher: fetchExternalGames })
+const freeCatalog = createFreeToGameCatalog(freeToGame, commerce)
 const community = createCommunity(directory, commerce)
 const profiles = createProfiles(directory)
 const sessions = createSessions(database)
@@ -83,8 +86,10 @@ export const server = createServer(async (req, res) => {
     }
     if (req.method === 'GET' && path === '/api/games') {
       void catalogSync.initialize()
-      return reply(res, 200, { games: commerce.games(), catalog: catalogSync.state })
+      void freeCatalog.initialize()
+      return reply(res, 200, { games: commerce.games(), catalog: catalogSync.state, freeCatalog: freeCatalog.state })
     }
+    if (req.method === 'GET' && path === '/api/freetogame/games') return reply(res, 200, await freeCatalog.list({ category: url.searchParams.get('category') || '', platform: url.searchParams.get('platform') || 'all', sortBy: url.searchParams.get('sort-by') || 'relevance' }))
     if (req.method === 'GET' && path === '/api/platforms') return reply(res, 200, { platforms: [...new Map(commerce.games().flatMap(game => game.platforms || []).map(item => [item.id, item])).values()] })
     if (path === '/api/wishlist' && ['GET', 'POST'].includes(req.method)) {
       if (!user) return reply(res, 401, { error: 'Inicia sesión para guardar tus juegos.' })
@@ -97,8 +102,16 @@ export const server = createServer(async (req, res) => {
     if (req.method === 'GET' && /^\/api\/games\/[^/]+$/.test(path)) {
       const id = decodeURIComponent(path.split('/')[3])
       let game = commerce.games().find(item => item.id === id)
+      if (!game && /^freetogame-[1-9]\d*$/.test(id) && freeToGame.configured) {
+        commerce.importFreeGames([await freeToGame.detail(id.slice('freetogame-'.length))])
+        game = commerce.games().find(item => item.id === id)
+      }
       if (!game) return reply(res, 404, { error: 'Juego no encontrado. Abre el catálogo para actualizar los juegos disponibles.' })
       let notice = ''
+      if (game.source === 'freetogame' && freeToGame.configured) {
+        try { commerce.importFreeGames([await freeToGame.detail(game.sourceId)]); game = commerce.games().find(item => item.id === id) }
+        catch (error) { notice = error.message }
+      }
       if (game.source === 'opengames' && openGames.configured) {
         try {
           commerce.importOpenGames([await openGames.detail(game.slug)])

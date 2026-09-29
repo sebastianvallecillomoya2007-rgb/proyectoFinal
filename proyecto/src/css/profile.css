@@ -1,14 +1,22 @@
 /* === Perfil e identidad === */
-.profile-page { max-width: 1500px; margin: auto; padding: 28px clamp(16px, 4vw, 56px) 64px; color: var(--text-main); overflow: visible; }
+.profile-page { width: 100%; max-width: 1600px; margin: auto; padding: 28px clamp(16px, 4vw, 56px) 64px; color: var(--text-main); overflow: visible; }
+.profile-layout { display: grid; gap: 28px; align-items: start; }
+.profile-main-column { min-width: 0; }
 .profile-page a { color: var(--neon-cyan); }
 .profile-back { font-size: 0.85rem; text-decoration: none; }
 .profile-notice { min-height: 28px; margin: 10px 0; color: var(--neon-cyan); }
 .profile-hero { background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 18px; overflow: hidden; }
 .profile-banner { height: 180px; position: relative; overflow: hidden; padding: 24px; background: radial-gradient(ellipse at 75% 0%, #2563eb55, transparent 60%), repeating-linear-gradient(110deg, transparent 0 65px, #77eee30b 66px 67px), linear-gradient(120deg, #071c27, #182135 65%, #251a38); }
-.profile-banner > span { color: #b4c5ff; letter-spacing: 0.25em; font-size: 0.7rem; }
+.profile-banner > span { display: block; max-width: calc(100% - 180px); color: #b4c5ff; letter-spacing: 0.25em; font-size: 0.7rem; }
+.profile-banner-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.profile-banner-edit { position: absolute; top: 18px; right: 18px; z-index: 1; display: inline-flex; align-items: center; gap: 9px; min-height: 42px; padding: 10px 15px; border: 1px solid #ffffff50; border-radius: 9px; background: #0d1424dc; color: #fff; font: inherit; font-size: 0.8rem; font-weight: 650; cursor: pointer; backdrop-filter: blur(12px); }
+.profile-banner-edit:hover { background: #25384bf2; border-color: var(--neon-cyan); }
 .profile-banner-orbit { position: absolute; width: 360px; height: 360px; border: 1px solid #77eee34d; border-radius: 50%; right: 8%; top: -150px; box-shadow: 0 0 0 40px #77eee307, 0 0 0 80px #77eee307; }
 .profile-identity { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; padding: 0 28px 24px; position: relative; margin-top: -42px; }
-.profile-avatar { display: block; width: 124px; height: 124px; flex-shrink: 0; object-fit: cover; border-radius: 22px; border: 3px solid var(--neon-cyan); background: var(--bg-sidebar); }
+.profile-avatar { display: block; width: 124px; height: 124px; flex-shrink: 0; object-fit: cover; border-radius: 50%; border: 3px solid var(--neon-cyan); background: var(--bg-sidebar); }
+.profile-avatar-edit { position: relative; border: 0; border-radius: 50%; padding: 0; background: var(--bg-card); cursor: pointer; box-shadow: 0 0 0 6px var(--bg-card); }
+.profile-avatar-edit:hover .profile-avatar { filter: brightness(1.12); }
+.profile-avatar-camera { position: absolute; bottom: 0; right: 0; width: 36px; height: 36px; display: grid; place-items: center; border: 3px solid var(--bg-card); border-radius: 50%; background: var(--neon-cyan); color: var(--bg-main); }
 .profile-initials { display: grid; place-items: center; color: var(--neon-cyan); font-size: 2.5rem; font-weight: 800; }
 .profile-identity-copy { min-width: 0; flex: 1 1 250px; padding-top: 54px; overflow-wrap: anywhere; }
 .profile-identity h1 { font-size: clamp(1.8rem, 3vw, 2.6rem); margin: 5px 0 8px; line-height: 1.15; }
@@ -24,8 +32,7 @@
 .profile-stats small { font-size: 0.85rem; color: var(--neon-cyan); }
 
 /* === Biblioteca y filtros === */
-.profile-columns { display: grid; gap: 28px; margin-top: 36px; align-items: start; }
-.profile-library { min-width: 0; }
+.profile-library { min-width: 0; margin-top: 36px; }
 .profile-section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
 .profile-section-heading h2 { font-size: 1.4rem; margin-top: 6px; }
 .profile-section-heading > span { font-size: 0.8rem; color: var(--text-muted); }
@@ -60,7 +67,9 @@
 .profile-page .btn-buy { color: var(--bg-main); }
 
 /* === Lista personal de amigos === */
-.profile-friends { min-width: 0; padding: 24px; border: 1px solid var(--border-glow); border-radius: 12px; background: var(--bg-card); }
+.profile-friends { position: static; display: block; width: auto; height: auto; min-width: 0; padding: 24px; border: 1px solid var(--border-glow); border-radius: 16px; background: var(--bg-card); z-index: auto; overflow: visible; }
+.profile-friends .profile-section-heading { padding-bottom: 18px; border-bottom: 1px solid var(--border-glow); margin-bottom: 16px; }
+.profile-friends .profile-friends-count { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: var(--neon-cyan); background: var(--bg-sidebar); }
 .profile-code { padding: 14px; background: var(--bg-sidebar); border-radius: 8px; }
 .profile-code input { font-size: 0.7rem; }
 .profile-code small { line-height: 1.6; }
@@ -74,8 +83,9 @@
 .profile-friend-list small { display: block; color: var(--text-muted); font-size: 0.7rem; margin-top: 4px; }
 .profile-friend-list button { font-size: 0.7rem; }
 .profile-page button:disabled { opacity: 0.6; cursor: wait; }
-@media (min-width: 1100px) {
-  .profile-columns { grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); }
+@media (min-width: 960px) {
+  .profile-layout { grid-template-columns: minmax(0, 1fr) 300px; }
+  .profile-friends { position: sticky; top: 24px; left: auto; max-height: calc(100dvh - 48px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-glow) transparent; }
   .profile-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
@@ -83,4 +93,6 @@
   .profile-identity-copy { flex-basis: 100%; padding-top: 0; }
   .profile-photo-actions { padding-top: 0; width: 100%; }
   .profile-stats { margin-inline: 16px; padding: 16px; }
+  .profile-banner-edit { top: 14px; right: 14px; padding: 9px 12px; }
+  .profile-banner > span { max-width: 110px; line-height: 1.8; }
 }

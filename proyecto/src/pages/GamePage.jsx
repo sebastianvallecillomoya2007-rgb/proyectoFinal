@@ -70,6 +70,7 @@ export default function GamePage({ id, user }) {
     ['Plataformas', game.platforms?.map(item => item.name).join(', ') || 'No especificadas'],
     ['Género', gameCategories(game).map(category => t(categoryLabel(category))).join(' · ')],
     ['Lanzamiento', game.released || game.launchDate || 'No especificado'],
+    ...(game.source === 'freetogame' ? [['Desarrollador', game.developer || 'No especificado'], ['Distribuidor', game.publisher || 'No especificado']] : []),
     ['Última versión', game.latestRelease || 'No especificada'],
     ['Licencia', game.license || 'No especificada'],
     ['Lenguaje', game.language || 'No especificado'],
@@ -111,7 +112,7 @@ export default function GamePage({ id, user }) {
         <section className="game-panel"><h2>{t("Información del juego")}</h2><dl className="game-facts">{facts.map(([label, value]) => <div key={label}><dt>{t(label)}</dt><dd>{t(value)}</dd></div>)}</dl>
           {game.source === 'opengames' && <p className="github-stars">{t("★ ")}{game.stars?.toLocaleString(getLocale()) || t(0)}{t(" estrellas en GitHub ")}<small>{t("Popularidad del proyecto; no es una valoración de jugadores.")}</small></p>}
           {game.repoUrl && <a className="official-link" href={game.repoUrl} target="_blank" rel="noreferrer">{t("Ver repositorio ↗")}</a>}
-          {(game.sourceUrl || game.rawgUrl) && <a className="official-link" href={game.sourceUrl || game.rawgUrl} target="_blank" rel="noreferrer">{t("Fuente: ")}{game.source === 'opengames' ? t('OpenGames') : t('RAWG')}{t(" ↗")}</a>}
+          {(game.sourceUrl || game.rawgUrl) && <a className="official-link" href={game.sourceUrl || game.rawgUrl} target="_blank" rel="noreferrer">{t("Fuente: ")}{game.source === 'freetogame' ? 'FreeToGame' : game.source === 'opengames' ? t('OpenGames') : t('RAWG')}{t(" ↗")}</a>}
         </section>
       </div>
     </div>

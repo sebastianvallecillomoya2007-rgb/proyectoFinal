@@ -12,6 +12,7 @@ const requirements = {
   'sekiro shadows die twice': steam(814380, 'Windows 7 / 8 / 10 de 64 bits (Steam requiere Windows 10 o posterior)', 'Intel Core i3-2100 / AMD FX-6300', '4 GB', 'GeForce GTX 760 / Radeon HD 7950', '25 GB', '11'),
 }
 export function getRequirements(game) {
+  if (game.source === 'freetogame' && game.requirements) return game.requirements
   const title = (game.title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()
   return requirements[title] || null
 }

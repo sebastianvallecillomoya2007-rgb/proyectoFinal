@@ -14,9 +14,9 @@ test('Deseados, reseñas, precios y persistencia por usuario', async () => {
   process.env.ADMIN_EMAIL = 'admin@test.com'
   process.env.ADMIN_PASSWORD = 'Admin-password-123!'
   const commerce = createCommerce(directory)
-  const game = normalizeGame({ id: '1', slug: 'test-game', title: 'Test game', genre: 'rpg' })
-  commerce.importOpenGames([game])
-  assert.equal(commerce.games().find(item => item.id === game.id).price, null)
+  const game = normalizeGame({ id: '1', slug: 'test-game', title: 'Test game', genre: 'rpg', thumbnailUrl: 'https://example.com/game.jpg' })
+  commerce.importOpenGames([{ ...game, price: 5 }])
+  assert.equal(commerce.games().find(item => item.id === game.id).price, 5)
   commerce.updatePrice(game.id, { basePrice: 15, isOffer: true, offerPrice: 10 })
   commerce.importOpenGames([{ ...game, description: 'Updated' }])
   assert.equal(commerce.games().find(item => item.id === game.id).price, 10)

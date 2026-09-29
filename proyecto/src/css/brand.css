@@ -1,0 +1,69 @@
+/* El nombre visible identifica la marca; el emblema no repite su texto accesible. */
+.nexus-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.nexus-brand-lockup > .nexus-brand-emblem {
+  display: block;
+  width: 52px;
+  height: 49px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.nexus-brand-lockup > .nexus-brand-name {
+  min-width: 0;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+.ac-root .ac-brand .nexus-brand-lockup,
+.ac-root .ac-brand .nexus-brand-name {
+  color: inherit;
+}
+
+.ac-sidebar .nexus-brand-lockup {
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.ac-sidebar .nexus-brand-emblem {
+  width: 42px;
+  height: 40px;
+}
+
+.ac-root .ac-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ac-breadcrumb .nexus-brand-emblem,
+.ac-footer .nexus-brand-emblem {
+  width: 28px;
+  height: 27px;
+}
+
+.ac-footer .nexus-brand-lockup,
+.ac-breadcrumb .nexus-brand-lockup {
+  gap: 6px;
+}
+
+@media (max-width: 480px) {
+  .site-header .nexus-brand-emblem,
+  .ac-login .nexus-brand-emblem {
+    width: 44px;
+    height: 42px;
+  }
+
+  .site-header .nexus-brand-lockup,
+  .ac-login .nexus-brand-lockup {
+    gap: 8px;
+  }
+}

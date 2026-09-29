@@ -42,7 +42,7 @@ test('Juegos, usuarios, ventas y comunidad comparten db.json sin perder cambios'
   database.update(current => ({ ...current, users: [user] }))
   commerce.updatePrice('1', { basePrice: 25, isOffer: false })
   community.setWishlist(user.id, { gameId: '1', saved: true })
-  commerce.importOpenGames([{ id: 'opengames-example', title: 'Example', categories: ['rpg'] }])
+  commerce.importOpenGames([{ id: 'opengames-example', title: 'Example', categories: ['rpg'], image: 'https://example.com/game.jpg', price: 5 }])
   community.review(user, '1', { rating: 5, text: 'Una experiencia muy entretenida.' })
   const order = commerce.purchase(user, { gameId: '1', expectedPrice: 25, requestId: '11111111-1111-1111-1111-111111111111' })
   database.update(current => ({ ...current, users: [...current.users, { id: 'second' }] }))

@@ -6,6 +6,29 @@ import { join, resolve, dirname, basename } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { createCommerce } from './commerce.js'
 
+test('excluye importaciones sin imagen salvo FreeToGame y conserva el catálogo local', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'nexus-commerce-test-'))
+  try {
+    const commerce = createCommerce(directory)
+    const local = commerce.games()
+    const pictured = { id: 'opengames-photo', source: 'opengames', title: 'Photo', image: 'https://example.com/photo.jpg', categories: ['rpg'], price: 10 }
+    commerce.importOpenGames([pictured, { ...pictured, id: 'opengames-empty', image: '' }])
+    commerce.importOpenGames([{ ...pictured, image: ' ' }])
+    commerce.importGames([{ rawgId: 123, title: local[0].title, image: '', categories: ['rpg'] }])
+    commerce.importFreeGames([{ id: 'freetogame-123', source: 'freetogame', title: 'Free', image: '' }])
+    const saved = createCommerce(directory).games()
+    assert.deepEqual(saved.slice(0, local.length), local)
+    assert.equal(saved.length, local.length + 2)
+    assert.equal(saved.find(game => game.id === pictured.id).image, pictured.image)
+    assert.ok(saved.some(game => game.id === 'freetogame-123'))
+    assert.ok(!saved.some(game => game.id === 'opengames-empty'))
+  } finally {
+    assert.equal(dirname(resolve(directory)), resolve(tmpdir()))
+    assert.ok(basename(directory).startsWith('nexus-commerce-test-'))
+    rmSync(directory, { recursive: true, force: true })
+  }
+})
+
 test('ventas, ofertas, rankings, periodos y persistencia', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'nexus-commerce-test-'))
   process.env.AUTH_DATA_DIR = directory
